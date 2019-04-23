@@ -4,7 +4,7 @@
 #include "board_library.h"
 #include "UI_library.h"
 
-int main(int argc, char oij* argv[]){
+int main(int argc, char * argv[]){
 
 	SDL_Event event;
 	int done = 0;
@@ -17,10 +17,10 @@ int main(int argc, char oij* argv[]){
 			printf("TTF_Init: %s\n", TTF_GetError());
 			exit(2);
 	}
-
-
-	create_board_window(300, 300,  4);
 	dim=atoi(argv[1]);
+
+	create_board_window(300, 300,  dim);
+
 	init_board(dim);
 
 	while (!done){
