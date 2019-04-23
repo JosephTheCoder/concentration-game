@@ -1,10 +1,10 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
-
+#include <unistd.h>
 #include "board_library.h"
 #include "UI_library.h"
 
-int main(int argc, char argv[]){
+int main(int argc, char * argv[]){
 
 	SDL_Event event;
 	int done = 0;
