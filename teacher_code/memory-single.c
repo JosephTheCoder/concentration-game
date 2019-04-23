@@ -4,11 +4,11 @@
 #include "board_library.h"
 #include "UI_library.h"
 
-int main(){
+int main(int argc, char argv[]){
 
 	SDL_Event event;
 	int done = 0;
-
+	int dim=0;
 	 if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {
 		 printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
 		 exit(-1);
@@ -20,7 +20,8 @@ int main(){
 
 
 	create_board_window(300, 300,  4);
-	init_board(4);
+	dim=atoi(argv[1]);
+	init_board(dim);
 
 	while (!done){
 		while (SDL_PollEvent(&event)) {
