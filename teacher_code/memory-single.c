@@ -9,6 +9,12 @@ int main(int argc, char * argv[]){
 	SDL_Event event;
 	int done = 0;
 	int dim=0;
+
+	if (argc != 2 || sscanf(argv[1], "%d", &dim)==0 ) {
+		printf("Please provide a correct dimension argument!\n");
+		exit(1);
+	}
+
 	 if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {
 		 printf( "SDL could not initialize! SDL_Error: %s\n", SDL_GetError() );
 		 exit(-1);
@@ -17,10 +23,15 @@ int main(int argc, char * argv[]){
 			printf("TTF_Init: %s\n", TTF_GetError());
 			exit(2);
 	}
+<<<<<<< HEAD
 	dim=atoi(argv[1]);
 
 	create_board_window(300, 300,  dim);
 
+=======
+	
+	create_board_window(300, 300,  dim);
+>>>>>>> 7067d5d31fba84a2b68ead15620e1f75d5e082e1
 	init_board(dim);
 
 	while (!done){
