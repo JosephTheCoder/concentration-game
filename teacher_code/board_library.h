@@ -2,6 +2,7 @@
 
 typedef struct board_place{
   char v[3];
+  int color[3]; // [r, g, b]
 } board_place;
 
 typedef struct play_response{

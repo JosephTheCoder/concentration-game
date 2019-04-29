@@ -46,16 +46,12 @@ int main(int argc, char *argv[])
     if (connect(fd, res->ai_addr, res->ai_addrlen) == -1)
         exit(1);
 
-    /* get DIM info */
-    n = write(fd, "Hello\n", 7);
-    if (n == -1)
-        exit(1);
-
+    /* Receave board dimension info */
     n = read(fd, buffer, BUFFER_SIZE);
     if (n == -1)
         exit(1);
 
-    write(1, "echo: ", 6);
+    sscanf(buffer, "%d", &dim);
 
     /* Init board window */
     create_board_window(300, 300,  dim);
