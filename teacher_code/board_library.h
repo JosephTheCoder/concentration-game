@@ -5,6 +5,12 @@ typedef struct board_place{
   int color[3]; // [r, g, b]
 } board_place;
 
+int dim_board;
+board_place *board;
+int play1[2];
+int n_corrects;
+
+
 typedef struct play_response{
   int code; // 0 - filled
             // 1 - 1st play

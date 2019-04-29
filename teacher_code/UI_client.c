@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
     if (connect(fd, res->ai_addr, res->ai_addrlen) == -1)
         exit(1);
 
-    /* Receave board dimension info */
+    /* Read board dimension info */
     n = read(fd, buffer, BUFFER_SIZE);
     if (n == -1)
         exit(1);
@@ -54,52 +54,58 @@ int main(int argc, char *argv[])
     sscanf(buffer, "%d", &dim);
 
     /* Init board window */
-    create_board_window(300, 300,  dim);
-	init_board(dim);
+    create_board_window(300, 300, dim);
+    init_board(dim);
 
     /* Start game (copy from memory-single) */
-    while (!done){
-		while (SDL_PollEvent(&event)) {
-			switch (event.type) {
-				case SDL_QUIT: {
-					done = SDL_TRUE;
-					break;
-				}
-				case SDL_MOUSEBUTTONDOWN:{
-					int board_x, board_y;
-					get_board_card(event.button.x, event.button.y, &board_x, &board_y);
+    while (!done)
+    {
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+            case SDL_QUIT:
+            {
+                done = SDL_TRUE;
+                break;
+            }
+            case SDL_MOUSEBUTTONDOWN:
+            {
+                int board_x, board_y;
+                get_board_card(event.button.x, event.button.y, &board_x, &board_y);
 
-					printf("click (%d %d) -> (%d %d)\n", event.button.x, event.button.y, board_x, board_y);
-					play_response resp = board_play(board_x, board_y);
-					switch (resp.code) {
-						case 1:
-							paint_card(resp.play1[0], resp.play1[1] , 7, 200, 100);
-							write_card(resp.play1[0], resp.play1[1], resp.str_play1, 200, 200, 200);
-							break;
-						case 3:
-						  done = 1;
-						case 2:
-							paint_card(resp.play1[0], resp.play1[1] , 107, 200, 100);
-							write_card(resp.play1[0], resp.play1[1], resp.str_play1, 0, 0, 0);
-							paint_card(resp.play2[0], resp.play2[1] , 107, 200, 100);
-							write_card(resp.play2[0], resp.play2[1], resp.str_play2, 0, 0, 0);
-							break;
-						case -2:
-							paint_card(resp.play1[0], resp.play1[1] , 107, 200, 100);
-							write_card(resp.play1[0], resp.play1[1], resp.str_play1, 255, 0, 0);
-							paint_card(resp.play2[0], resp.play2[1] , 107, 200, 100);
-							write_card(resp.play2[0], resp.play2[1], resp.str_play2, 255, 0, 0);
-							sleep(2);
-							paint_card(resp.play1[0], resp.play1[1] , 255, 255, 255);
-							paint_card(resp.play2[0], resp.play2[1] , 255, 255, 255);
-							break;
-					}
-				}
-			}
-		}
-	}
-	printf("fim\n");
-	close_board_windows();
+                printf("click (%d %d) -> (%d %d)\n", event.button.x, event.button.y, board_x, board_y);
+                play_response resp = board_play(board_x, board_y);
+                switch (resp.code)
+                {
+                case 1:
+                    paint_card(resp.play1[0], resp.play1[1], 7, 200, 100);
+                    write_card(resp.play1[0], resp.play1[1], resp.str_play1, 200, 200, 200);
+                    break;
+                case 3:
+                    done = 1;
+                case 2:
+                    paint_card(resp.play1[0], resp.play1[1], 107, 200, 100);
+                    write_card(resp.play1[0], resp.play1[1], resp.str_play1, 0, 0, 0);
+                    paint_card(resp.play2[0], resp.play2[1], 107, 200, 100);
+                    write_card(resp.play2[0], resp.play2[1], resp.str_play2, 0, 0, 0);
+                    break;
+                case -2:
+                    paint_card(resp.play1[0], resp.play1[1], 107, 200, 100);
+                    write_card(resp.play1[0], resp.play1[1], resp.str_play1, 255, 0, 0);
+                    paint_card(resp.play2[0], resp.play2[1], 107, 200, 100);
+                    write_card(resp.play2[0], resp.play2[1], resp.str_play2, 255, 0, 0);
+                    sleep(2);
+                    paint_card(resp.play1[0], resp.play1[1], 255, 255, 255);
+                    paint_card(resp.play2[0], resp.play2[1], 255, 255, 255);
+                    break;
+                }
+            }
+            }
+        }
+    }
+    printf("fim\n");
+    close_board_windows();
 
     freeaddring(res);
     close(fd);
