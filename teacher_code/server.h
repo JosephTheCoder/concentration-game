@@ -9,6 +9,8 @@
 #include <netdb.h>
 #include <pthread.h>
 
+#define CONCENTRATION_GAME_PORT 3000
+
 int fd, newfd;
 char buffer[128];
 ssize_t n;

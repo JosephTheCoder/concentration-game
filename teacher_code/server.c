@@ -6,91 +6,95 @@
 
 #include <time.h>
 
+char rand_color()
+{
+    int x = 0;
+    char color[11] = {'\0'};
 
-char rand_color(){
-            int x=0;
-            char color[11]={'\0'};
+    x = rand() % 255;
+    strcat(color, x);
+    strcat(color, "/");
+    x = rand() % 255;
+    strcat(color, x);
+    strcat(color, "/");
+    x = rand() % 255;
+    strcat(color, x);
+    return color;
+}
 
-             x=rand()%255; 
-             strcat(color , x);
-             strcat(color , "/");
-             x=rand()%255; 
-             strcat(color , x);
-             strcat(color , "/");
-             x=rand()%255; 
-             strcat(color , x);
-            return color;     
-        } 
+void *thread_fcn(void *arg)
+{
+    int nfd = *((int *)arg);
 
-void * thread_fcn(void * arg){
-  int nfd=*((int*)arg);
-
-    while(1){
-        n=read(nfd, buffer, 129);
-        if(n==-1)
+    while (1)
+    {
+        n = read(nfd, buffer, 129);
+        if (n == -1)
             exit(1);
 
-        write(nfd, "connected: " , strlen("connected: "));
-        write(1, buffer, n);    
+        write(nfd, "connected: ", strlen("connected: "));
+        write(1, buffer, n);
     }
 }
 
-
-void main(int argc, char* argv[]){
-
-    memset(&hints, 0, sizeof hints);
-    hints.ai_family=AF_INET;
-    hints.ai_socktype=SOCK_STREAM;;
-    hints.ai_flags=AI_PASSIVE|AI_NUMERICSERV;
+void main(int argc, char *argv[])
+{
+    struct sockaddr_in local_addr;
+    
     pthread_t thread_ID;
-    int dim=0;
-    int nb_players=0;
-    char color[11]={'\0'};
+    int dim = 0;
+    int nb_players = 0;
+    char color[11] = {'\0'};
     srand(time(NULL));
 
-    if(argc!=2 || sscanf(argv[1], "%d", &dim)==0){
+    if (argc != 2 || sscanf(argv[1], "%d", &dim) == 0)
+    {
         printf("Please provide a correct dimension argument.\n");
         exit(1);
     }
+
     init_board(dim); //mudar parametros de board
-    
-    n=getaddrinfo(NULL, PORT, &hints, &res);
-    if(n!=0)
+
+    int sock_fd= socket(AF_INET, SOCK_STREAM, 0);
+    if (sock_fd == -1){
+        perror("socket: ");
+        exit(-1);
+    }
+
+    local_addr.sin_family = AF_INET;
+    local_addr.sin_port= htons(CONCENTRATION_GAME_PORT);
+    local_addr.sin_addr.s_addr= INADDR_ANY;   
+
+    n = bind(sock_fd, (struct sockaddr *)&local_addr, sizeof(local_addr));
+    if(n == -1) {
+        perror("bind");
+        exit(-1);
+    }
+
+    if (listen(sock_fd, 10) == -1)
         exit(1);
 
-    fd=socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if(fd==-1)
-        exit(1);
-
-    n=bind(fd, res->ai_addr, res->ai_addrlen);
-    if(n==-1)
-        exit(1);
-
-    if(listen(fd,10)==-1)
-        exit(1);
-
-
-    while(1){
-
-    if((newfd==accept(fd,(struct sockaddr*)&addr, &addrlen))==-1) 
-        exit(1);
+    while (1)
+    {
+        if ((newfd == accept(sock_fd, NULL, NULL)) == -1)
+            exit(1);
 
         nb_players++;
-        write(newfd, &dim, sizeof(dim)); 
-        stcpy(color,rand_color());
-        write(newfd,"your color code is: ", strlen("your color code is: ")); 
+
+        write(newfd, &dim, sizeof(dim));
+        stcpy(color, rand_color());
+        write(newfd, "your color code is: ", strlen("your color code is: "));
         write(newfd, color, strlen(color));
 
-        if(nb_players<2){
 
-            write(newfd, "Not enough players to start a game.\nPlease wait...", strlen("Not enough players to start a game.\nPlease wait..."));   
-        }
-        else{
+        else
+        {
 
             srcpty(buffer, board.v);
             strcat(buffer, color);
 
-            for(i=0; i<(dim^2); i++){
+            for (i = 0; i < (dim ^ 2); i++)
+            {
 
                 write(newfd, buffer, strlen(buffer));
             }
@@ -102,6 +106,3 @@ void main(int argc, char* argv[]){
     close(newfd);
     close(fd);
 }
-
-
-
