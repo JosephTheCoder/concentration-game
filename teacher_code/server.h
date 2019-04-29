@@ -17,4 +17,5 @@ struct addrinfo hints, *res;
 struct sockaddr_in addr;
 
 void server_fcn();
+char rand_color();
 void * thread_fcn();

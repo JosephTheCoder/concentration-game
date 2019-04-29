@@ -3,11 +3,11 @@
 #include <stdio.h>
 #include <string.h>
 
-int dim_board;
+/* int dim_board;
 board_place *board;
 int play1[2];
 int n_corrects;
-
+ */
 int linear_conv(int i, int j)
 {
   return j * dim_board + i;

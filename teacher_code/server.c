@@ -4,35 +4,56 @@
 #include "UI_library.h"
 #include "server.h"
 
+#include <time.h>
 
-void * thread_fcn(void* arg){
+
+char rand_color(){
+            int x=0;
+            char color[11]={'\0'};
+
+             x=rand()%255; 
+             strcat(color , x);
+             strcat(color , "/");
+             x=rand()%255; 
+             strcat(color , x);
+             strcat(color , "/");
+             x=rand()%255; 
+             strcat(color , x);
+            return color;     
+        } 
+
+void * thread_fcn(void * arg){
+  int nfd=*((int*)arg);
 
     while(1){
-        n=read(newfd, buffer, 129);
+        n=read(nfd, buffer, 129);
         if(n==-1)
             exit(1);
 
-        write(1, "received: ", 10);
+        write(nfd, "connected: " , strlen("connected: "));
         write(1, buffer, n);    
     }
 }
 
 
-void server_fcn(int argc, char* argv[]){
+void main(int argc, char* argv[]){
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family=AF_INET;
     hints.ai_socktype=SOCK_STREAM;;
     hints.ai_flags=AI_PASSIVE|AI_NUMERICSERV;
-    pthread_t * thread_ID;
+    pthread_t thread_ID;
     int dim=0;
+    int nb_players=0;
+    char color[11]={'\0'};
+    srand(time(NULL));
 
     if(argc!=2 || sscanf(argv[1], "%d", &dim)==0){
         printf("Please provide a correct dimension argument.\n");
         exit(1);
     }
-
-
+    init_board(dim); //mudar parametros de board
+    
     n=getaddrinfo(NULL, PORT, &hints, &res);
     if(n!=0)
         exit(1);
@@ -48,15 +69,33 @@ void server_fcn(int argc, char* argv[]){
     if(listen(fd,10)==-1)
         exit(1);
 
+
     while(1){
 
     if((newfd==accept(fd,(struct sockaddr*)&addr, &addrlen))==-1) 
         exit(1);
 
-        write(1, dim, sizeof(dim));   
+        nb_players++;
+        write(newfd, &dim, sizeof(dim)); 
+        stcpy(color,rand_color());
+        write(newfd,"your color code is: ", strlen("your color code is: ")); 
+        write(newfd, color, strlen(color));
 
-        pthread_create(&thread_ID,NULL, thread_fcn,NULL);
+        if(nb_players<2){
 
+            write(newfd, "Not enough players to start a game.\nPlease wait...", strlen("Not enough players to start a game.\nPlease wait..."));   
+        }
+        else{
+
+            srcpty(buffer, board.v);
+            strcat(buffer, color);
+
+            for(i=0; i<(dim^2); i++){
+
+                write(newfd, buffer, strlen(buffer));
+            }
+            pthread_create(&thread_ID, NULL, thread_fcn, (int *)newfd);
+        }
     }
 
     freeaddrinfo(res);

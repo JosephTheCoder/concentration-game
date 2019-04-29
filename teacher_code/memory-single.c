@@ -23,15 +23,8 @@ int main(int argc, char * argv[]){
 			printf("TTF_Init: %s\n", TTF_GetError());
 			exit(2);
 	}
-<<<<<<< HEAD
-	dim=atoi(argv[1]);
-
-	create_board_window(300, 300,  dim);
-
-=======
 	
 	create_board_window(300, 300,  dim);
->>>>>>> 7067d5d31fba84a2b68ead15620e1f75d5e082e1
 	init_board(dim);
 
 	while (!done){
