@@ -6,12 +6,14 @@
 
 #include <time.h>
 
+int players_fd[MAX_PLAYERS];
 
 char rand_color()
 {
     int x = 0;
     char color[11] = {'\0'};
 
+    //pode haver jogadores com cores muito parecidas
     x = rand() % 255;
     strcat(color, x);
     strcat(color, "/");
@@ -23,31 +25,41 @@ char rand_color()
     return color;
 }
 
-void *thread_fcn(void *arg)
+void *send_new_player_info(void *x)
 {
-    int nfd = *((int *)arg);
-   //sleep(5);
-
+    int i = *(int *)x;
     while (1)
     {
-        n = read(nfd, buffer, 129);
-        if (n == -1)
-            exit(1);
+        if (write(players_fd[i], &players[i], sizeof(players[i])) > 0)
+            printf("Sent player number\n");
 
-        
-        write(nfd, "connected: ", strlen("connected: "));
-        write(1, buffer, n);
+        write(players_fd[i], &dim, sizeof(dim));
+        stcpy(color, rand_color());
+        write(players_fd[i], color, strlen(color));
+
+        clear_board(&b);
+
+        while (b.winner == ' ')
+        {
+            write(players_fd[i], &b, sizeof(b));
+            play_remote(&b, players[i], players_fd[i]);
+            write(players_fd[i], &b, sizeof(b));
+            printf("Sent board\n");
+        }
     }
+    pthread_exit(NULL);
 }
 
 void main(int argc, char *argv[])
 {
-    struct sockaddr_in local_addr;
-    
-    pthread_t thread_ID;
-    int dim = 0;
+    struct sockaddr_in local_addr, client_addr;
+
+    int dim = 0, i = 0;
     int nb_players = 0;
     char color[11] = {'\0'};
+    int size_addr = 0;
+
+    pthread_t thread_ID;
     srand(time(NULL));
     
 
@@ -59,18 +71,20 @@ void main(int argc, char *argv[])
 
     init_board(dim);  // por cores a preto [0,0,0]
 
-    int sock_fd= socket(AF_INET, SOCK_STREAM, 0);
-    if (sock_fd == -1){
+    int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock_fd == -1)
+    {
         perror("socket: ");
         exit(-1);
     }
 
     local_addr.sin_family = AF_INET;
-    local_addr.sin_port= htons(CONCENTRATION_GAME_PORT);
-    local_addr.sin_addr.s_addr= INADDR_ANY;   
+    local_addr.sin_port = htons(CONCENTRATION_GAME_PORT);
+    local_addr.sin_addr.s_addr = INADDR_ANY;
 
     n = bind(sock_fd, (struct sockaddr *)&local_addr, sizeof(local_addr));
-    if(n == -1) {
+    if (n == -1)
+    {
         perror("bind");
         exit(-1);
     }
@@ -80,18 +94,16 @@ void main(int argc, char *argv[])
 
     while (1)
     {
+        // Waiting for players
+        for (i = 0; i < 2; i++)
+        {
+            size_addr = sizeof(client_addr);
+            players_fd[i] = accept(sock_fd, (struct sockaddr *)&client_addr, &size_addr);
 
-        if ((newfd == accept(sock_fd, NULL, NULL)) == -1)
-            exit(1);
+            nb_players++;
 
-        nb_players++;
-        write(newfd, &nb_players, sizeof(nb_players));
-
-        write(newfd, &dim, sizeof(dim));
-        stcpy(color, rand_color());
-        write(newfd, "your color code is: ", strlen("your color code is: "));
-        write(newfd, color, strlen(color));
-
+            pthread_create(&thread_ID, NULL, send_new_player_info, (int *)&i);
+        }
 
         while(nb_players<2){
             wait();

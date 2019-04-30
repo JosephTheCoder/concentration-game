@@ -10,6 +10,7 @@
 #include <pthread.h>
 
 #define CONCENTRATION_GAME_PORT 3000
+#define MAX_PLAYERS 10
 
 int fd, newfd;
 char buffer[128];
