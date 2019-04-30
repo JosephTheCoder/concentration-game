@@ -100,40 +100,42 @@ void main(int argc, char *argv[])
             size_addr = sizeof(client_addr);
             players_fd[i] = accept(sock_fd, (struct sockaddr *)&client_addr, &size_addr);
 
+            jogadores[i]
+            
             nb_players++;
 
             pthread_create(&thread_ID, NULL, send_new_player_info, (int *)&i);
         }
 
-        while(nb_players<2){
-            wait();
-        }
+        while(nb_players>2){
+            
         
-        srcpty(buffer, board[i].v);
-        strcat(buffer, color);
+            srcpty(buffer, board[i].v);
+            strcat(buffer, color);
 
-        for (i = 0; i < (dim ^ 2); i++)
-        {
-            if (board[i].color[0]!=107 &&  board[1].color[2]!=200 && board[3].color[3]!=100)
+            for (i = 0; i < (dim ^ 2); i++)
             {
-                strcpy(buffer, board[i].v);
-                strcat(buffer, "/");
-                sprintf(color, "%d", board[i].color[0]);
-                strcat(buffer,color);
-                strcat(buffer, "/");
-                sprintf(color, "%d", board[i].color[1]);
-                strcat(buffer,color);
-                strcat(buffer, "/");
-                sprintf(color, "%d", board[i].color[2]);
-                strcat(buffer,color);
-                strcat(buffer, "/");
-                strcat(buffer, i);
+                if (board[i].color[0]!=107 &&  board[1].color[2]!=200 && board[3].color[3]!=100)
+                {
+                    strcpy(buffer, board[i].v);
+                    strcat(buffer, "/");
+                    sprintf(color, "%d", board[i].color[0]);
+                    strcat(buffer,color);
+                    strcat(buffer, "/");
+                    sprintf(color, "%d", board[i].color[1]);
+                    strcat(buffer,color);
+                    strcat(buffer, "/");
+                    sprintf(color, "%d", board[i].color[2]);
+                    strcat(buffer,color);
+                    strcat(buffer, "/");
+                    strcat(buffer, i);
 
-                write(newfd, buffer, strlen(buffer));
+                    write(newfd, buffer, strlen(buffer));
 
+                }
             }
+            pthread_create(&thread_ID, NULL, thread_fcn, (int *)newfd);
         }
-        pthread_create(&thread_ID, NULL, thread_fcn, (int *)newfd);
     }
 
     freeaddrinfo(res);

@@ -19,6 +19,12 @@ socklen_t addrlen;
 struct addrinfo hints, *res;
 struct sockaddr_in addr;
 
+typedef struct jogador{
+    int color[3];
+    int num;
+    int fd;
+}jogador;
+
 void server_fcn();
 char rand_color();
 void * thread_fcn();
