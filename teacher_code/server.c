@@ -6,6 +6,7 @@
 
 #include <time.h>
 
+
 char rand_color()
 {
     int x = 0;
@@ -25,6 +26,7 @@ char rand_color()
 void *thread_fcn(void *arg)
 {
     int nfd = *((int *)arg);
+   //sleep(5);
 
     while (1)
     {
@@ -32,6 +34,7 @@ void *thread_fcn(void *arg)
         if (n == -1)
             exit(1);
 
+        
         write(nfd, "connected: ", strlen("connected: "));
         write(1, buffer, n);
     }
@@ -46,6 +49,7 @@ void main(int argc, char *argv[])
     int nb_players = 0;
     char color[11] = {'\0'};
     srand(time(NULL));
+    
 
     if (argc != 2 || sscanf(argv[1], "%d", &dim) == 0)
     {
@@ -53,7 +57,7 @@ void main(int argc, char *argv[])
         exit(1);
     }
 
-    init_board(dim); //mudar parametros de board
+    init_board(dim);  // por cores a preto [0,0,0]
 
     int sock_fd= socket(AF_INET, SOCK_STREAM, 0);
     if (sock_fd == -1){
@@ -76,10 +80,12 @@ void main(int argc, char *argv[])
 
     while (1)
     {
+
         if ((newfd == accept(sock_fd, NULL, NULL)) == -1)
             exit(1);
 
         nb_players++;
+        write(newfd, &nb_players, sizeof(nb_players));
 
         write(newfd, &dim, sizeof(dim));
         stcpy(color, rand_color());
@@ -87,19 +93,35 @@ void main(int argc, char *argv[])
         write(newfd, color, strlen(color));
 
 
-        else
+        while(nb_players<2){
+            wait();
+        }
+        
+        srcpty(buffer, board[i].v);
+        strcat(buffer, color);
+
+        for (i = 0; i < (dim ^ 2); i++)
         {
-
-            srcpty(buffer, board.v);
-            strcat(buffer, color);
-
-            for (i = 0; i < (dim ^ 2); i++)
+            if (board[i].color[0]!=107 &&  board[1].color[2]!=200 && board[3].color[3]!=100)
             {
+                strcpy(buffer, board[i].v);
+                strcat(buffer, "/");
+                sprintf(color, "%d", board[i].color[0]);
+                strcat(buffer,color);
+                strcat(buffer, "/");
+                sprintf(color, "%d", board[i].color[1]);
+                strcat(buffer,color);
+                strcat(buffer, "/");
+                sprintf(color, "%d", board[i].color[2]);
+                strcat(buffer,color);
+                strcat(buffer, "/");
+                strcat(buffer, i);
 
                 write(newfd, buffer, strlen(buffer));
+
             }
-            pthread_create(&thread_ID, NULL, thread_fcn, (int *)newfd);
         }
+        pthread_create(&thread_ID, NULL, thread_fcn, (int *)newfd);
     }
 
     freeaddrinfo(res);

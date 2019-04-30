@@ -31,6 +31,7 @@ void init_board(int dim)
   for (i = 0; i < (dim_board * dim_board); i++)
   {
     board[i].v[0] = '\0';
+    board[i].color={107, 200, 100}
   }
 
   for (char c1 = 'a'; c1 < ('a' + dim_board); c1++)
