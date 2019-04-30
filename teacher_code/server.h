@@ -12,7 +12,7 @@
 #define CONCENTRATION_GAME_PORT 3000
 #define MAX_PLAYERS 10
 
-int fd, newfd;
+int fd, newfd, dim;
 char buffer[128];
 ssize_t n;
 socklen_t addrlen;

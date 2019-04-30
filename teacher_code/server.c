@@ -25,7 +25,7 @@ char rand_color()
     return color;
 }
 
-void *send_new_player_info(void *x)
+void *accept_new_players(void *x)
 {
     int i = *(int *)x;
     while (1)
@@ -36,32 +36,49 @@ void *send_new_player_info(void *x)
         write(players_fd[i], &dim, sizeof(dim));
         stcpy(color, rand_color());
         write(players_fd[i], color, strlen(color));
-
-        clear_board(&b);
-
-        while (b.winner == ' ')
-        {
-            write(players_fd[i], &b, sizeof(b));
-            play_remote(&b, players[i], players_fd[i]);
-            write(players_fd[i], &b, sizeof(b));
-            printf("Sent board\n");
-        }
     }
     pthread_exit(NULL);
+}
+
+void send_state_board(int fd)
+{
+    int i;
+    char color[11] = {'\0'};
+
+    for (i = 0; i < (dim ^ 2); i++)
+    {
+        if (board[i].color[0] != 107 && board[1].color[2] != 200 && board[3].color[3] != 100)
+        {
+            strcpy(buffer, board[i].v);
+            strcat(buffer, "/");
+            sprintf(color, "%d", board[i].color[0]);
+            strcat(buffer, color);
+            strcat(buffer, "/");
+            sprintf(color, "%d", board[i].color[1]);
+            strcat(buffer, color);
+            strcat(buffer, "/");
+            sprintf(color, "%d", board[i].color[2]);
+            strcat(buffer, color);
+            strcat(buffer, "/");
+            strcat(buffer, i);
+
+            write(fd, buffer, strlen(buffer));
+        }
+    }
 }
 
 void main(int argc, char *argv[])
 {
     struct sockaddr_in local_addr, client_addr;
 
-    int dim = 0, i = 0;
+    int i = 0;
     int nb_players = 0;
-    char color[11] = {'\0'};
     int size_addr = 0;
+
+    char color[11] = {'\0'};
 
     pthread_t thread_ID;
     srand(time(NULL));
-    
 
     if (argc != 2 || sscanf(argv[1], "%d", &dim) == 0)
     {
@@ -69,7 +86,7 @@ void main(int argc, char *argv[])
         exit(1);
     }
 
-    init_board(dim);  // por cores a preto [0,0,0]
+    init_board(dim); // por cores a preto [0,0,0]
 
     int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_fd == -1)
@@ -100,40 +117,18 @@ void main(int argc, char *argv[])
             size_addr = sizeof(client_addr);
             players_fd[i] = accept(sock_fd, (struct sockaddr *)&client_addr, &size_addr);
 
-            nb_players++;
-
-            pthread_create(&thread_ID, NULL, send_new_player_info, (int *)&i);
+            write(players_fd[i], &dim, sizeof(dim));
+            stcpy(color, rand_color());
+            write(players_fd[i], color, strlen(color));
         }
 
-        while(nb_players<2){
-            wait();
-        }
-        
+        send_state_board(players_fd[0]);
+        send_state_board(players_fd[1]);
+
+        pthread_create(&thread_ID, NULL, accept_new_players, NULL);
+
         srcpty(buffer, board[i].v);
         strcat(buffer, color);
-
-        for (i = 0; i < (dim ^ 2); i++)
-        {
-            if (board[i].color[0]!=107 &&  board[1].color[2]!=200 && board[3].color[3]!=100)
-            {
-                strcpy(buffer, board[i].v);
-                strcat(buffer, "/");
-                sprintf(color, "%d", board[i].color[0]);
-                strcat(buffer,color);
-                strcat(buffer, "/");
-                sprintf(color, "%d", board[i].color[1]);
-                strcat(buffer,color);
-                strcat(buffer, "/");
-                sprintf(color, "%d", board[i].color[2]);
-                strcat(buffer,color);
-                strcat(buffer, "/");
-                strcat(buffer, i);
-
-                write(newfd, buffer, strlen(buffer));
-
-            }
-        }
-        pthread_create(&thread_ID, NULL, thread_fcn, (int *)newfd);
     }
 
     freeaddrinfo(res);
