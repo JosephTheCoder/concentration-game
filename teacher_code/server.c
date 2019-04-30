@@ -6,11 +6,14 @@
 
 #include <time.h>
 
+int players_fd[MAX_PLAYERS];
+
 char rand_color()
 {
     int x = 0;
     char color[11] = {'\0'};
 
+    //pode haver jogadores com cores muito parecidas
     x = rand() % 255;
     strcat(color, x);
     strcat(color, "/");
@@ -37,12 +40,19 @@ void *thread_fcn(void *arg)
     }
 }
 
+void *connect_new_clients(void *args)
+{
+    while(1)
+    {
+
+    }
+}
+
 void main(int argc, char *argv[])
 {
-    struct sockaddr_in local_addr;
-    
+    struct sockaddr_in local_addr, client_addr;
     pthread_t thread_ID;
-    int dim = 0;
+    int dim = 0, i =0;
     int nb_players = 0;
     char color[11] = {'\0'};
     srand(time(NULL));
@@ -55,18 +65,20 @@ void main(int argc, char *argv[])
 
     init_board(dim); //mudar parametros de board
 
-    int sock_fd= socket(AF_INET, SOCK_STREAM, 0);
-    if (sock_fd == -1){
+    int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock_fd == -1)
+    {
         perror("socket: ");
         exit(-1);
     }
 
     local_addr.sin_family = AF_INET;
-    local_addr.sin_port= htons(CONCENTRATION_GAME_PORT);
-    local_addr.sin_addr.s_addr= INADDR_ANY;   
+    local_addr.sin_port = htons(CONCENTRATION_GAME_PORT);
+    local_addr.sin_addr.s_addr = INADDR_ANY;
 
     n = bind(sock_fd, (struct sockaddr *)&local_addr, sizeof(local_addr));
-    if(n == -1) {
+    if (n == -1)
+    {
         perror("bind");
         exit(-1);
     }
@@ -76,17 +88,20 @@ void main(int argc, char *argv[])
 
     while (1)
     {
-        if ((newfd == accept(sock_fd, NULL, NULL)) == -1)
-            exit(1);
+        for(i = 0; i < 2; i++) {
+            // thread a aceitar novos clientes e a enviar o seu numero e cor
+            players_fd[i]= accept(sock_fd, (struct sockaddr *) & client_addr, &size_addr);; 
 
-        nb_players++;
+            nb_players++;
 
-        write(newfd, &dim, sizeof(dim));
-        stcpy(color, rand_color());
-        write(newfd, "your color code is: ", strlen("your color code is: "));
-        write(newfd, color, strlen(color));
+            write(newfd, &dim, sizeof(dim));
+            stcpy(color, rand_color());
+            write(newfd, "your color code is: ", strlen("your color code is: "));
+            write(newfd, color, strlen(color));
+        }
+        
 
-
+        // thread a enviar state of board
         else
         {
 
