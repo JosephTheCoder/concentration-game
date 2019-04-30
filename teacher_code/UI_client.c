@@ -7,7 +7,6 @@
 #include <netdb.h>
 #include <ws2tcpip.h>
 
-#define PORT "3000"
 #define BUFFER_SIZE 128
 
 int main(int argc, char *argv[])
@@ -34,24 +33,40 @@ int main(int argc, char *argv[])
         exit(2);
     }
 
-    /* Init TCP */
-    memset(&hints, 0, sizeof hints);
-    hints.a_family = AF_INET;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flag = AI_NUMERICSERV;
+    if (argc < 2)
+    {
+        printf("second argument should be server address\n");
+        exit(-1);
+    }
 
-    if (getaddrinfo("", PORT, &hints, &res) != 0)
-        exit(1);
+    int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
 
-    if (connect(fd, res->ai_addr, res->ai_addrlen) == -1)
-        exit(1);
+    if (sock_fd == -1)
+    {
+        perror("socket: ");
+        exit(-1);
+    }
+
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(CONCENTRATION_GAME_PORT);
+    inet_aton(argv[1], &server_addr.sin_addr);
+
+    if (-1 == connect(sock_fd, (const struct sockaddr *)&server_addr, sizeof(server_addr)))
+    {
+        printf("Error connecting\n");
+        exit(-1);
+    }
 
     /* Read board dimension info */
-    n = read(fd, buffer, BUFFER_SIZE);
-    if (n == -1)
+    if (read(fd, buffer, BUFFER_SIZE) == -1);
         exit(1);
-
+    
     sscanf(buffer, "%d", &dim);
+
+    if (read(fd, buffer, BUFFER_SIZE) == -1);
+        exit(1);
+    
+    sscanf(buffer, "%d/%d/%d", &r, &g, &b);
 
     /* Init board window */
     create_board_window(300, 300, dim);

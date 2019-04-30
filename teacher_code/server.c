@@ -25,18 +25,24 @@ char rand_color()
     return color;
 }
 
-void *accept_new_players(void *x)
+void *accept_new_players(void *sock_fd)
 {
-    int i = *(int *)x;
+    int player = 2;
+
     while (1)
     {
-        if (write(players_fd[i], &players[i], sizeof(players[i])) > 0)
-            printf("Sent player number\n");
+        size_addr = sizeof(client_addr);
+        players_fd[player] = accept(sock_fd, (struct sockaddr *)&client_addr, &size_addr);
 
-        write(players_fd[i], &dim, sizeof(dim));
+        write(players_fd[player], &dim, sizeof(dim));
         stcpy(color, rand_color());
-        write(players_fd[i], color, strlen(color));
+        write(players_fd[player], color, strlen(color));
+
+        send_state_board(players_fd[player]);
+
+        player++;
     }
+
     pthread_exit(NULL);
 }
 
@@ -112,20 +118,25 @@ void main(int argc, char *argv[])
     while (1)
     {
         // Waiting for players
-        for (i = 0; i < 2; i++)
+        if (nb_players == 0)
         {
-            size_addr = sizeof(client_addr);
-            players_fd[i] = accept(sock_fd, (struct sockaddr *)&client_addr, &size_addr);
+            for (i = 0; i < 2; i++)
+            {
+                size_addr = sizeof(client_addr);
+                players_fd[i] = accept(sock_fd, (struct sockaddr *)&client_addr, &size_addr);
 
-            write(players_fd[i], &dim, sizeof(dim));
-            stcpy(color, rand_color());
-            write(players_fd[i], color, strlen(color));
+                write(players_fd[i], &dim, sizeof(dim));
+                stcpy(color, rand_color());
+                write(players_fd[i], color, strlen(color));
+
+                nb_players++;
+            }
+
+            send_state_board(players_fd[0]);
+            send_state_board(players_fd[1]);
         }
 
-        send_state_board(players_fd[0]);
-        send_state_board(players_fd[1]);
-
-        pthread_create(&thread_ID, NULL, accept_new_players, NULL);
+        pthread_create(&thread_ID, NULL, accept_new_players, (int *)&sock_fd);
 
         srcpty(buffer, board[i].v);
         strcat(buffer, color);

@@ -12,6 +12,12 @@
 #define CONCENTRATION_GAME_PORT 3000
 #define MAX_PLAYERS 10
 
+typedef struct player{
+  int player_fd;
+  char color;
+  player *next;
+} player;
+
 int fd, newfd, dim;
 char buffer[128];
 ssize_t n;
