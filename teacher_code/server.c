@@ -25,43 +25,56 @@ char rand_color()
     return color;
 }
 
-void *send_new_player_info(void *x)
+void *  comunication_server_players(void *x)
 {
     int i = *(int *)x;
     while (1)
     {
-        if (write(players_fd[i], &players[i], sizeof(players[i])) > 0)
-            printf("Sent player number\n");
-
-        write(players_fd[i], &dim, sizeof(dim));
-        stcpy(color, rand_color());
-        write(players_fd[i], color, strlen(color));
-
-        clear_board(&b);
-
-        while (b.winner == ' ')
-        {
-            write(players_fd[i], &b, sizeof(b));
-            play_remote(&b, players[i], players_fd[i]);
-            write(players_fd[i], &b, sizeof(b));
-            printf("Sent board\n");
-        }
+        send_state_board(players_fd[i]);
+        
     }
     pthread_exit(NULL);
+}
+
+void send_state_board(int fd)
+{
+    int i;
+    char color[11] = {'\0'};
+
+    for (i = 0; i < (dim ^ 2); i++)
+    {
+        if (board[i].color[0] != 107 && board[1].color[2] != 200 && board[3].color[3] != 100)
+        {
+            strcpy(buffer, board[i].v);
+            strcat(buffer, "/");
+            sprintf(color, "%d", board[i].color[0]);
+            strcat(buffer, color);
+            strcat(buffer, "/");
+            sprintf(color, "%d", board[i].color[1]);
+            strcat(buffer, color);
+            strcat(buffer, "/");
+            sprintf(color, "%d", board[i].color[2]);
+            strcat(buffer, color);
+            strcat(buffer, "/");
+            strcat(buffer, i);
+
+            write(fd, buffer, strlen(buffer));
+        }
+    }
 }
 
 void main(int argc, char *argv[])
 {
     struct sockaddr_in local_addr, client_addr;
 
-    int dim = 0, i = 0;
+    int i = 0;
     int nb_players = 0;
-    char color[11] = {'\0'};
     int size_addr = 0;
+
+    char color[11] = {'\0'};
 
     pthread_t thread_ID;
     srand(time(NULL));
-    
 
     if (argc != 2 || sscanf(argv[1], "%d", &dim) == 0)
     {
@@ -69,7 +82,7 @@ void main(int argc, char *argv[])
         exit(1);
     }
 
-    init_board(dim);  // por cores a preto [0,0,0]
+    init_board(dim); // por cores a preto [0,0,0]
 
     int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_fd == -1)
@@ -94,48 +107,27 @@ void main(int argc, char *argv[])
 
     while (1)
     {
+       
         // Waiting for players
-        for (i = 0; i < 2; i++)
-        {
-            size_addr = sizeof(client_addr);
-            players_fd[i] = accept(sock_fd, (struct sockaddr *)&client_addr, &size_addr);
+        size_addr = sizeof(client_addr);
+        players_fd[nb_players] = accept(sock_fd, (struct sockaddr *)&client_addr, &size_addr);
+            if(players_fd[nb_players]==-1)
+                exit(1);
 
-            jogadores[i]
-            
-            nb_players++;
-
-            pthread_create(&thread_ID, NULL, send_new_player_info, (int *)&i);
-        }
-
-        while(nb_players>2){
-            
+        write(players_fd[nb_players], &dim, sizeof(dim));
+        stcpy(color, rand_color());
+        write(players_fd[nb_players], color, strlen(color));
         
-            srcpty(buffer, board[i].v);
-            strcat(buffer, color);
-
-            for (i = 0; i < (dim ^ 2); i++)
-            {
-                if (board[i].color[0]!=107 &&  board[1].color[2]!=200 && board[3].color[3]!=100)
-                {
-                    strcpy(buffer, board[i].v);
-                    strcat(buffer, "/");
-                    sprintf(color, "%d", board[i].color[0]);
-                    strcat(buffer,color);
-                    strcat(buffer, "/");
-                    sprintf(color, "%d", board[i].color[1]);
-                    strcat(buffer,color);
-                    strcat(buffer, "/");
-                    sprintf(color, "%d", board[i].color[2]);
-                    strcat(buffer,color);
-                    strcat(buffer, "/");
-                    strcat(buffer, i);
-
-                    write(newfd, buffer, strlen(buffer));
-
-                }
-            }
-            pthread_create(&thread_ID, NULL, thread_fcn, (int *)newfd);
+        // basta uma thread por jogador(em principio)
+        if(nb_players=2) // se for o 2º jogador então cria a thread do 1º(que nao podia jogar sozinho) e do 2º
+        {
+            for(i=0;i<2;i++)
+                pthread_create(&thread_ID, NULL, accept_new_players, i);
+        }else{
+            pthread_create(&thread_ID, NULL, comunication_server_players, nb_players);
         }
+
+        nb_players++;
     }
 
     freeaddrinfo(res);

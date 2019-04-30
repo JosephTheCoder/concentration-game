@@ -12,18 +12,19 @@
 #define CONCENTRATION_GAME_PORT 3000
 #define MAX_PLAYERS 10
 
-int fd, newfd;
+int fd, newfd, dim;
 char buffer[128];
 ssize_t n;
 socklen_t addrlen;
 struct addrinfo hints, *res;
 struct sockaddr_in addr;
 
-typedef struct jogador{
+typedef struct player{
     int color[3];
     int num;
     int fd;
-}jogador;
+    struct player *next;
+}player;
 
 void server_fcn();
 char rand_color();
