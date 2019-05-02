@@ -25,12 +25,13 @@ char rand_color()
     return color;
 }
 
-void *  comunication_server_players(void *x)
+void * comunication_server_players(void *x)
 {
     int i = *(int *)x;
     while (1)
     {
         send_state_board(players_fd[i]);
+
         
     }
     pthread_exit(NULL);
@@ -76,6 +77,14 @@ void main(int argc, char *argv[])
     pthread_t thread_ID;
     srand(time(NULL));
 
+    player * head=NULL;
+    head = malloc(sizeof(player));
+    if (head == NULL) {
+        return 1;
+    }
+    head-> = 1;
+    head->next = NULL;
+
     if (argc != 2 || sscanf(argv[1], "%d", &dim) == 0)
     {
         printf("Please provide a correct dimension argument.\n");
@@ -114,10 +123,11 @@ void main(int argc, char *argv[])
             if(players_fd[nb_players]==-1)
                 exit(1);
 
+        
         write(players_fd[nb_players], &dim, sizeof(dim));
         stcpy(color, rand_color());
         write(players_fd[nb_players], color, strlen(color));
-        
+
         // basta uma thread por jogador(em principio)
         if(nb_players=2) // se for o 2º jogador então cria a thread do 1º(que nao podia jogar sozinho) e do 2º
         {
