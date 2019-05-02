@@ -68,6 +68,8 @@ int main(int argc, char *argv[])
     
     sscanf(buffer, "%d/%d/%d", &r, &g, &b);
 
+    printf("dim: %d\n", dim);
+
     /* Init board window */
     create_board_window(300, 300, dim);
     init_board(dim);

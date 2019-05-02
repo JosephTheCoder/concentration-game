@@ -76,7 +76,7 @@ void send_state_board(int fd)
 void main(int argc, char *argv[])
 {
     struct sockaddr_in local_addr, client_addr;
-
+    
     int i = 0;
     int nb_players = 0;
     int size_addr = 0;
@@ -105,12 +105,8 @@ void main(int argc, char *argv[])
     local_addr.sin_port = htons(CONCENTRATION_GAME_PORT);
     local_addr.sin_addr.s_addr = INADDR_ANY;
 
-    n = bind(sock_fd, (struct sockaddr *)&local_addr, sizeof(local_addr));
-    if (n == -1)
-    {
-        perror("bind");
+    if (bind(sock_fd, (struct sockaddr *)&local_addr, sizeof(local_addr)) == -1)
         exit(-1);
-    }
 
     if (listen(sock_fd, 10) == -1)
         exit(1);
@@ -136,10 +132,10 @@ void main(int argc, char *argv[])
             send_state_board(players_fd[1]);
         }
 
-        pthread_create(&thread_ID, NULL, accept_new_players, (int *)&sock_fd);
+        //pthread_create(&thread_ID, NULL, accept_new_players, (int *)&sock_fd);
 
-        srcpty(buffer, board[i].v);
-        strcat(buffer, color);
+        //srcpty(buffer, board[i].v);
+        //strcat(buffer, color);
     }
 
     freeaddrinfo(res);
