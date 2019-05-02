@@ -9,22 +9,23 @@
 #include <netdb.h>
 #include <pthread.h>
 
-#define CONCENTRATION_GAME_PORT 3000
-#define MAX_PLAYERS 10
+#define CONCENTRATION_GAME_PORT 3013
+#define BUFFER_SIZE 128
 
 typedef struct player{
-  int player_fd;
-  char color;
-  player *next;
-} player;
+    int color[3]; //[r,g,b]
+    int number;
+    int fd;
+    struct player *next;
+} player_t;
 
-int fd, newfd, dim;
-char buffer[128];
-ssize_t n;
-socklen_t addrlen;
-struct addrinfo hints, *res;
-struct sockaddr_in addr;
+int dim;
+char buffer[BUFFER_SIZE];
 
 void server_fcn();
-char rand_color();
 void * thread_fcn();
+
+int *random_color();
+void send_state_board(int fd);
+void push_to_list(player_t *head, int *color, int fd);
+int remove_from_list(player_t **head, int number);

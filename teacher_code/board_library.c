@@ -3,11 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-/* int dim_board;
-board_place *board;
-int play1[2];
-int n_corrects;
- */
 int linear_conv(int i, int j)
 {
   return j * dim_board + i;
@@ -31,7 +26,9 @@ void init_board(int dim)
   for (i = 0; i < (dim_board * dim_board); i++)
   {
     board[i].v[0] = '\0';
-    board[i].color={107, 200, 100}
+    board[i].color[0] = 107;
+    board[i].color[1] = 200;
+    board[i].color[2] = 100;
   }
 
   for (char c1 = 'a'; c1 < ('a' + dim_board); c1++)
