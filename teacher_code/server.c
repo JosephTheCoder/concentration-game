@@ -113,9 +113,8 @@ void send_state_board(int fd, int dim_board)
     char color[11] = {'\0'};
     int sent_cell = 0;
 
-    for (i = 0; i < dim*dim; i++)
+    for (i = 0; i < dim * dim; i++)
     {
-        // in case of an ongoing game
         if (board[i].color[0] != 107 && board[1].color[2] != 200 && board[3].color[3] != 100)
         {
             memset(buffer, 0, BUFFER_SIZE);
@@ -141,13 +140,13 @@ void send_state_board(int fd, int dim_board)
 
             printf("buffer: %s\n", buffer);
             write(fd, buffer, sizeof(buffer));
-            
+
             sent_cell = 1;
         }
     }
 
     // in case of an empty board
-    if(sent_cell == 0)
+    if (sent_cell == 0)
     {
         strcpy(buffer, "empty_board");
         write(fd, buffer, sizeof(buffer));
@@ -267,7 +266,6 @@ void main(int argc, char *argv[])
     // ---- Main loop ----
     while (1)
     {
-
         // Waiting for players
         new_fd = accept(sock_fd, (struct sockaddr *)&client_addr, &size_addr);
         if (new_fd == -1)
@@ -312,7 +310,7 @@ void main(int argc, char *argv[])
         if(nr_players == 2) //if(nr_players > 1)
             {  
                 send_state = 1;
-                pthread_create(&thread_ID, NULL, comunication_server_players, players_list_head->fd);
+                //pthread_create(&thread_ID, NULL, comunication_server_players, players_list_head->fd);
             }
     
 
@@ -322,16 +320,14 @@ void main(int argc, char *argv[])
 
             while (current != NULL)
             {
-                printf("fd: %d\n", current->fd);
-                send_state_board(current->fd, dim);
+                send_state_board(current->fd);
                 current = current->next;
 
             }
-            
-            pthread_create(&thread_ID, NULL, comunication_server_players, current->fd);
         }
 
-    } 
-
+        pthread_create(&thread_ID, NULL, comunication_server_players, new_fd);
+    }
+    
     close(sock_fd);
 }

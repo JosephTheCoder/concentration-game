@@ -20,6 +20,8 @@ int main(int argc, char *argv[])
     struct sockaddr_in server_addr;
     char buffer[BUF FER_SIZE];
 
+    play_response resp;
+
     int color[3];
 
     SDL_Event event;
@@ -60,31 +62,19 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    /* Read board dimension info */
+    /* Read board dimension and color info */
     if (read(sock_fd, buffer, BUFFER_SIZE) == -1)
     {
         perror("error reading dimension of board");
         exit(-1);
     }
 
-    sscanf(buffer, "%d", &dim);
-
-    memset(buffer, 0, BUFFER_SIZE);
-    if (read(sock_fd, buffer, BUFFER_SIZE) == -1)
-    {
-        perror("error reading player color");
-        exit(-1);
-    }
-
-    int r, g, b;
-    sscanf(buffer, "%d/%d/%d", &r, &g, &b);
+    sscanf(buffer, "%d/%d/%d/%d", &dim, &color[0], &color[1], &color[2]);
 
     printf("board dimension: %d\n", dim);
-    printf("player color: [%d,%d,%d]\n", r, g, b);
+    create_board_window(300, 300, dim);
 
-    color[0] = r;
-    color[1] = g;
-    color[2] = b;
+    printf("player color: [%d,%d,%d]\n", color[0], color[1], color[2]);
 
     for (int i = 0; i < dim * dim; i++)
     {
@@ -95,7 +85,7 @@ int main(int argc, char *argv[])
             exit(-1);
         }
 
-        if(strcmp(buffer, "empty_board") == 0) 
+        if (strcmp(buffer, "empty_board") == 0)
         {
             printf("Board is still empty\n");
             break;
@@ -110,59 +100,71 @@ int main(int argc, char *argv[])
         printf("%s\n", buffer);
     }
 
-    /* Init board window */
-    //create_board_window(300, 300, dim);
-    //init_board(dim);
+    /* Start game (copy from memory-single) */
+    while (!done)
+    {
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+            case SDL_QUIT:
+            {
+                done = SDL_TRUE;
+                // send message to server saying we're about to quit
+                break;
+            }
+            case SDL_MOUSEBUTTONDOWN:
+            {
+                int board_x, board_y;
+                get_board_card(event.button.x, event.button.y, &board_x, &board_y);
 
-    // /* Start game (copy from memory-single) */
-    // while (!done)
-    // {
-    //     while (SDL_PollEvent(&event))
-    //     {
-    //         switch (event.type)
-    //         {
-    //         case SDL_QUIT:
-    //         {
-    //             done = SDL_TRUE;
-    //             break;
-    //         }
-    //         case SDL_MOUSEBUTTONDOWN:
-    //         {
-    //             int board_x, board_y;
-    //             get_board_card(event.button.x, event.button.y, &board_x, &board_y);
+                printf("click (%d %d) -> (%d %d)\n", event.button.x, event.button.y, board_x, board_y);
 
-    //             printf("click (%d %d) -> (%d %d)\n", event.button.x, event.button.y, board_x, board_y);
-    //             play_response resp = board_play(board_x, board_y);
-    //             switch (resp.code)
-    //             {
-    //             case 1:
-    //                 paint_card(resp.play1[0], resp.play1[1], 7, 200, 100);
-    //                 write_card(resp.play1[0], resp.play1[1], resp.str_play1, 200, 200, 200);
-    //                 break;
-    //             case 3:
-    //                 done = 1;
-    //             case 2:
-    //                 paint_card(resp.play1[0], resp.play1[1], 107, 200, 100);
-    //                 write_card(resp.play1[0], resp.play1[1], resp.str_play1, 0, 0, 0);
-    //                 paint_card(resp.play2[0], resp.play2[1], 107, 200, 100);
-    //                 write_card(resp.play2[0], resp.play2[1], resp.str_play2, 0, 0, 0);
-    //                 break;
-    //             case -2:
-    //                 paint_card(resp.play1[0], resp.play1[1], 107, 200, 100);
-    //                 write_card(resp.play1[0], resp.play1[1], resp.str_play1, 255, 0, 0);
-    //                 paint_card(resp.play2[0], resp.play2[1], 107, 200, 100);
-    //                 write_card(resp.play2[0], resp.play2[1], resp.str_play2, 255, 0, 0);
-    //                 sleep(2);
-    //                 paint_card(resp.play1[0], resp.play1[1], 255, 255, 255);
-    //                 paint_card(resp.play2[0], resp.play2[1], 255, 255, 255);
-    //                 break;
-    //             }
-    //         }
-    //         }
-    //     }
-    // }
-    // printf("fim\n");
-    // close_board_windows();
+                // send play to server
+                memset(buffer, 0, BUFFER_SIZE);
+                sprintf(buffer, "%d/%d", board_x, board_y);
+                write(sock_fd, buffer, sizeof(buffer));
+
+                // Receive response from server
+                memset(buffer, 0, BUFFER_SIZE);
+                if (read(sock_fd, buffer, BUFFER_SIZE) == -1)
+                {
+                    perror("error reading play response");
+                    exit(-1);
+                }
+
+                sscanf(buffer, "%d/%d/%d/%d/%d/%d/%d/%d/%d", &resp.code, &resp.play1[0], &resp.play1[1], &resp.str_play1[0], &resp.str_play1[1], &resp.str_play1[2], &resp.str_play2[0], &resp.str_play2[1], &resp.str_play2[2]);
+
+                switch (resp.code)
+                {
+                case 1:
+                    paint_card(resp.play1[0], resp.play1[1], color[0], color[1], color[2]);
+                    write_card(resp.play1[0], resp.play1[1], resp.str_play1, 200, 200, 200);
+                    break;
+                case 3:
+                    done = 1;
+                case 2:
+                    paint_card(resp.play1[0], resp.play1[1], color[0], color[1], color[2]);
+                    write_card(resp.play1[0], resp.play1[1], resp.str_play1, 0, 0, 0);
+                    paint_card(resp.play2[0], resp.play2[1], color[0], color[1], color[2]);
+                    write_card(resp.play2[0], resp.play2[1], resp.str_play2, 0, 0, 0);
+                    break;
+                case -2:
+                    paint_card(resp.play1[0], resp.play1[1], color[0], color[1], color[2]);
+                    write_card(resp.play1[0], resp.play1[1], resp.str_play1, 255, 0, 0);
+                    paint_card(resp.play2[0], resp.play2[1], color[0], color[1], color[2]);
+                    write_card(resp.play2[0], resp.play2[1], resp.str_play2, 255, 0, 0);
+                    sleep(2);
+                    paint_card(resp.play1[0], resp.play1[1], 255, 255, 255);
+                    paint_card(resp.play2[0], resp.play2[1], 255, 255, 255);
+                    break;
+                }
+            }
+            }
+        }
+    }
+    printf("fim\n");
+    close_board_windows();
 
     close(fd);
 }
