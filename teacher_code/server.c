@@ -249,7 +249,6 @@ void main(int argc, char *argv[])
         if (nr_players == 2)
             send_state = 1;
 
-
         if (send_state == 1)
         {
             player_t *current = players_list_head;
@@ -261,22 +260,7 @@ void main(int argc, char *argv[])
             }
         }
 
-        //thread to listen the players plays
-        // read x y
-        //board_play(board_x, board_y);
-
-        // basta uma thread por jogador(em principio)
-        // if (nr_players = 2) // se for o 2º jogador então cria a thread do 1º(que nao podia jogar sozinho) e do 2º
-        // {
-        //     for (i = 0; i < 2; i++)
-        //         //envia o state of the board para todos os que estavam a espera
-        //         pthread_create(&thread_ID, NULL, accept_new_players, i);
-        // }
-
-        // else
-        // {
-        //     pthread_create(&thread_ID, NULL, comunication_server_players, nr_players);
-        // }
+        pthread_create(&thread_ID, NULL, read_plays, new_fd);
     }
 
     close(sock_fd);
