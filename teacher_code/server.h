@@ -22,6 +22,9 @@ typedef struct player{
 int dim;
 char buffer[BUFFER_SIZE];
 
+int  translate_i_to_x();
+int  translate_i_to_y();
+
 void server_fcn();
 void * thread_fcn();
 

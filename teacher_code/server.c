@@ -19,28 +19,103 @@ int *random_color()
     return color;
 }
 
-// void *accept_new_players(void *sock_fd)
-// {
-//     int player = 2;
+void *read_second_play(void *arg)
+{
+    int fd = *(int *)arg;
+    int x = 0, y = 0, flag = 0;
+    char buffer[128] = {'\0'};
+    play_response resp;
 
-//     while (1)
-//     {
-//         size_addr = sizeof(client_addr);
-//         players_fd[player] = accept(sock_fd, (struct sockaddr *)&client_addr, &size_addr);
+    while (1)
+    {
+        memset(buffer, 0, BUFFER_SIZE);
 
-//         write(players_fd[player], &dim, sizeof(dim));
-//         stcpy(color, rand_color());
-//         write(players_fd[player], color, strlen(color));
+        //add timer
+            //if timer ends -> pthread_exit(flag) = -1 (tempo acabou)
 
-//         send_state_board(players_fd[player]);
+        read(fd, buffer, strlen(buffer));
+        buffer[strlen(buffer)] = '\0';
 
-//         player++;
-//     }
+        sscanf(buffer, "%d/%d", &x, &y);
+        resp = board_play(x, y);
+    }
 
-//     pthread_exit(NULL);
-// }
+    pthread_exit(resp.code);
+}
 
-void send_state_board(int fd)
+
+void *comunication_server_players(void *arg)
+{
+    int fd = *(int *)arg;
+    int x = 0, y = 0;
+    char buffer[128] = {'\0'};
+    player_t *current = players_list_head;
+    play_response resp;
+
+    while (1)
+    {
+        memset(buffer, 0, BUFFER_SIZE);
+        read(fd, buffer, strlen(buffer));
+        buffer[strlen(buffer)] = '\0';
+
+        sscanf(buffer, "%d/%d", &x, &y);
+        resp = board_play(x, y);
+
+        switch (resp.code)
+        {
+        case 0:
+            /* chose filled position */
+            break;
+
+        case 1:
+            /* first play */
+
+            //created thread to send color to all players
+            
+            //creates thread for second play, (read with timer)
+
+            //pthread join, receives code as return
+                //switch code
+                    //case 2
+                    //case 3
+                    //case different
+
+            memset(buffer, 0, BUFFER_SIZE);
+            sprintf(aux, "%d", x);
+            strcat(buffer, aux);
+            strcat(buffer, "/");
+            sprintf(aux, "%d", x);
+            strcat(buffer, aux);
+
+            while (current->next != NULL)
+            {
+                if (current->fd != fd)
+                    write(current->fd, buffer, strlen(buffer));
+                current = current->next;
+            }
+            break;
+        }
+
+        write(current->fd, buffer, strlen(buffer));
+
+        // falta adicionar as cores do player que fez a jogada
+    }
+    pthread_exit(NULL);
+}
+
+int translate_i_to_x(int i, int dim_board)
+{
+    int x = i % dim_board;
+    return x;
+}
+
+int translate_i_to_y(int i, int dim_board)
+{
+    int y = i / dim_board;
+    return y;
+}
+
+void send_state_board(int fd, int dim_board)
 {
     int i;
     char str[12];
@@ -65,7 +140,11 @@ void send_state_board(int fd)
             strcat(buffer, color);
             strcat(buffer, "/");
 
-            sprintf(str, "%d", i);
+            // coordenadas x e y da celula da board
+            sprintf(str, "%d", translate_i_to_x(i, dim_board));
+            strcat(buffer, str);
+            strcat(buffer, "/");
+            sprintf(str, "%d", translate_i_to_y(i, dim_board));
             strcat(buffer, str);
 
             printf("buffer: %s\n", buffer);
@@ -166,6 +245,7 @@ void main(int argc, char *argv[])
         printf("Please provide a correct dimension argument.\n");
         exit(1);
     }
+
     init_board(dim);
 
     // ---- Setup TCP server ----
@@ -236,9 +316,18 @@ void main(int argc, char *argv[])
         sprintf(buffer, "%d/%d/%d", color[0], color[1], color[2]);
         write(new_fd, buffer, sizeof(buffer));
 
+<<<<<<< HEAD
         // only start the game when the second player connects
         if (nr_players == 2)
             send_state = 1;
+        == == == =
+                     if (nr_players == 2) //if(nr_players > 1)
+        {
+            send_state = 1;
+            //pthread_create(&thread_ID, NULL, comunication_server_players, players_list_head->fd);
+        }
+    
+>>>>>>> 18ec21862c24c879c6a2f10c812ebaf968ec32cf
 
         if (send_state == 1)
         {
@@ -251,7 +340,7 @@ void main(int argc, char *argv[])
             }
         }
 
-        pthread_create(&thread_ID, NULL, read_plays, new_fd);
+        pthread_create(&thread_ID, NULL, comunication_server_players, new_fd);
     }
 
     close(sock_fd);

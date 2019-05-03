@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     ssize_t n;
     socklen_t addrlen;
     struct sockaddr_in server_addr;
-    char buffer[BUFFER_SIZE];
+    char buffer[BUF FER_SIZE];
 
     play_response resp;
 
@@ -89,6 +89,11 @@ int main(int argc, char *argv[])
         {
             printf("Board is still empty\n");
             break;
+        }
+        else
+        {
+            
+
         }
 
         printf("Cell %d info received!\n", i);
