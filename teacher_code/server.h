@@ -24,11 +24,13 @@ char buffer[BUFFER_SIZE];
 
 int  translate_i_to_x();
 int  translate_i_to_y();
+char build_resp();
+void * comunication_server_players();
 
 void server_fcn();
 void * thread_fcn();
 
 int *random_color();
-void send_state_board(int fd);
+void send_state_board(int fd, int dim);
 void push_to_list(player_t *head, int *color, int fd);
 int remove_from_list(player_t **head, int number);

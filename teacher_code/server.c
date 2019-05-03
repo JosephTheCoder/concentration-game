@@ -31,7 +31,7 @@ void *read_second_play(void *arg)
         memset(buffer, 0, BUFFER_SIZE);
 
         //add timer
-            //if timer ends -> pthread_exit(flag) = -1 (tempo acabou)
+        //if timer ends -> pthread_exit(flag) = -1 (tempo acabou)
 
         read(fd, buffer, strlen(buffer));
         buffer[strlen(buffer)] = '\0';
@@ -43,12 +43,12 @@ void *read_second_play(void *arg)
     pthread_exit(resp.code);
 }
 
-
 void *comunication_server_players(void *arg)
 {
     int fd = *(int *)arg;
     int x = 0, y = 0;
     char buffer[128] = {'\0'};
+    char aux[128] = {'\0'};
     player_t *current = players_list_head;
     play_response resp;
 
@@ -71,20 +71,20 @@ void *comunication_server_players(void *arg)
             /* first play */
 
             //created thread to send color to all players
-            
+
             //creates thread for second play, (read with timer)
 
             //pthread join, receives code as return
-                //switch code
-                    //case 2
-                    //case 3
-                    //case different
+            //switch code
+            //case 2
+            //case 3
+            //case different
 
             memset(buffer, 0, BUFFER_SIZE);
             sprintf(aux, "%d", x);
             strcat(buffer, aux);
             strcat(buffer, "/");
-            sprintf(aux, "%d", x);
+            sprintf(aux, "%d", y);
             strcat(buffer, aux);
 
             while (current->next != NULL)
@@ -316,28 +316,11 @@ void main(int argc, char *argv[])
         sprintf(buffer, "%d/%d/%d", color[0], color[1], color[2]);
         write(new_fd, buffer, sizeof(buffer));
 
-<<<<<<< HEAD
         // only start the game when the second player connects
-        if (nr_players == 2)
-            send_state = 1;
-        == == == =
-                     if (nr_players == 2) //if(nr_players > 1)
+        if (nr_players == 2) //if(nr_players > 1)
         {
             send_state = 1;
             //pthread_create(&thread_ID, NULL, comunication_server_players, players_list_head->fd);
-        }
-    
->>>>>>> 18ec21862c24c879c6a2f10c812ebaf968ec32cf
-
-        if (send_state == 1)
-        {
-            player_t *current = players_list_head;
-
-            while (current != NULL)
-            {
-                send_state_board(current->fd);
-                current = current->next;
-            }
         }
 
         pthread_create(&thread_ID, NULL, comunication_server_players, new_fd);
