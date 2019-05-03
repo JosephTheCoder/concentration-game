@@ -42,6 +42,7 @@ void init_board(int dim)
         str_place = get_board_place_str(i, j);
         printf("%d %d -%s-\n", i, j, str_place);
       } while (str_place[0] != '\0');
+      
       str_place[0] = c1;
       str_place[1] = c2;
       str_place[2] = '\0';
