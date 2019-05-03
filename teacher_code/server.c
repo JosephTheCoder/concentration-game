@@ -40,16 +40,6 @@ int *random_color()
 //     pthread_exit(NULL);
 // }
 
-// void *comunication_server_players(void *x)
-// {
-//     int i = *(int *)x;
-//     while (1)
-//     {
-//         send_state_board(players_fd[i]);
-//     }
-//     pthread_exit(NULL);
-// }
-
 void send_state_board(int fd)
 {
     int i;
@@ -246,6 +236,7 @@ void main(int argc, char *argv[])
         sprintf(buffer, "%d/%d/%d", color[0], color[1], color[2]);
         write(new_fd, buffer, sizeof(buffer));
 
+        // only start the game when the second player connects
         if (nr_players == 2)
             send_state = 1;
 
