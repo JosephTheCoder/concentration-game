@@ -19,37 +19,36 @@ int *random_color()
     return color;
 }
 
-char build_resp(play_response resp){
-
-    char aux[128]={'\0'}, buffer[128]={'\0'};
-
-        sprintf(aux, "%d", resp.code);
-        strcpy(buffer, aux);
-        strcat(buffer, "/");
-        sprintf(aux, "%d", resp.play1[0]);
-        strccat(buffer, aux);
-        strcat(buffer, "/");
-        sprintf(aux, "%d", resp.play1[1]);
-        strcat(buffer, aux);
-        strcat(buffer, "/");
-        sprintf(aux, "%d", resp.play2[0]);
-        strcat(buffer, aux);
-        strcat(buffer, "/");
-        sprintf(aux, "%d", resp.play2[1]);
-        strcat(buffer, aux);
-        strcat(buffer, "/");
-        strcat(buffer, resp.str_play1);
-        strcat(buffer, "/");
-        strcat(buffer, resp.str_play2);
-    
-    return buffer;
-}
-
-void * comunication_server_players(void * arg)
+void *read_second_play(void *arg)
 {
     int fd = *(int *)arg;
-    int x=0, y=0;
-    char buffer[128]={'\0'}, aux[128]={'\0'};
+    int x = 0, y = 0, flag = 0;
+    char buffer[128] = {'\0'};
+    play_response resp;
+
+    while (1)
+    {
+        memset(buffer, 0, BUFFER_SIZE);
+
+        //add timer
+        //if timer ends -> pthread_exit(flag) = -1 (tempo acabou)
+
+        read(fd, buffer, strlen(buffer));
+        buffer[strlen(buffer)] = '\0';
+
+        sscanf(buffer, "%d/%d", &x, &y);
+        resp = board_play(x, y);
+    }
+
+    pthread_exit(resp.code);
+}
+
+void *comunication_server_players(void *arg)
+{
+    int fd = *(int *)arg;
+    int x = 0, y = 0;
+    char buffer[128] = {'\0'};
+    char aux[128] = {'\0'};
     player_t *current = players_list_head;
     play_response resp;
 
@@ -60,44 +59,59 @@ void * comunication_server_players(void * arg)
         buffer[strlen(buffer)] = '\0';
 
         sscanf(buffer, "%d/%d", &x, &y);
+        resp = board_play(x, y);
 
-        memset(buffer, 0, BUFFER_SIZE);
-        resp = board_play( x, y);
+        switch (resp.code)
+        {
+        case 0:
+            /* chose filled position */
+            break;
 
-        strcpy(buffer, build_resp(resp));
-        write(current->fd, buffer, strlen(buffer));
-        
-        memset(buffer, 0, BUFFER_SIZE);
-        sprintf(aux, "%d", x);
-        strcat(buffer, aux);
-        strcat(buffer, "/");
-        sprintf(aux, "%d", x);
-        strcat(buffer, aux);  
-        while (current->next != NULL)
-        {   
-            if(current->fd != fd)
+        case 1:
+            /* first play */
+
+            //created thread to send color to all players
+
+            //creates thread for second play, (read with timer)
+
+            //pthread join, receives code as return
+            //switch code
+            //case 2
+            //case 3
+            //case different
+
+            memset(buffer, 0, BUFFER_SIZE);
+            sprintf(aux, "%d", x);
+            strcat(buffer, aux);
+            strcat(buffer, "/");
+            sprintf(aux, "%d", y);
+            strcat(buffer, aux);
+
+            while (current->next != NULL)
+            {
+                if (current->fd != fd)
+                    write(current->fd, buffer, strlen(buffer));
                 current = current->next;
+            }
+            break;
         }
-        sprintf(aux, "%d/%d/%d", current->color[0], current->color[1], current->color[2]);
-        strcat(buffer, aux);
+
+        write(current->fd, buffer, strlen(buffer));
 
         // falta adicionar as cores do player que fez a jogada
-        current = players_list_head;
-        while (current->next != NULL)
-        {   if(current->fd != fd)
-                write(current->fd, buffer, strlen(buffer));
-            current = current->next;
-        }
     }
     pthread_exit(NULL);
 }
 
-int  translate_i_to_x(int i, int dim_board){
-    int x = i%dim_board;
+int translate_i_to_x(int i, int dim_board)
+{
+    int x = i % dim_board;
     return x;
 }
-int  translate_i_to_y(int i, int dim_board){
-    int y = i/dim_board;
+
+int translate_i_to_y(int i, int dim_board)
+{
+    int y = i / dim_board;
     return y;
 }
 
@@ -124,13 +138,13 @@ void send_state_board(int fd, int dim_board)
             strcat(buffer, "/");
             sprintf(color, "%d", board[i].color[2]);
             strcat(buffer, color);
-            strcat(buffer, "/"); 
+            strcat(buffer, "/");
 
-    // coordenadas x e y da celula da board
-            sprintf(str, "%d", translate_i_to_x(i,dim_board)); 
+            // coordenadas x e y da celula da board
+            sprintf(str, "%d", translate_i_to_x(i, dim_board));
             strcat(buffer, str);
-            strcat(buffer, "/"); 
-            sprintf(str, "%d", translate_i_to_y(i,dim_board)); 
+            strcat(buffer, "/");
+            sprintf(str, "%d", translate_i_to_y(i, dim_board));
             strcat(buffer, str);
 
             printf("buffer: %s\n", buffer);
@@ -302,26 +316,15 @@ void main(int argc, char *argv[])
         sprintf(buffer, "%d/%d/%d", color[0], color[1], color[2]);
         write(new_fd, buffer, sizeof(buffer));
 
-        if(nr_players == 2) //if(nr_players > 1)
-            {  
-                send_state = 1;
-                //pthread_create(&thread_ID, NULL, comunication_server_players, players_list_head->fd);
-            }
-    
-        if (send_state == 1)
+        // only start the game when the second player connects
+        if (nr_players == 2) //if(nr_players > 1)
         {
-            player_t *current = players_list_head;
-
-            while (current != NULL)
-            {
-                send_state_board(current->fd, dim);
-                current = current->next;
-
-            }
+            send_state = 1;
+            //pthread_create(&thread_ID, NULL, comunication_server_players, players_list_head->fd);
         }
 
         pthread_create(&thread_ID, NULL, comunication_server_players, new_fd);
     }
-    
+
     close(sock_fd);
 }
