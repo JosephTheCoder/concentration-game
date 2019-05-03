@@ -19,47 +19,11 @@ int *random_color()
     return color;
 }
 
-// void *accept_new_players(void *sock_fd)
-// {
-//     int player = 2;
+char build_resp(play_response resp){
 
-//     while (1)
-//     {
-//         size_addr = sizeof(client_addr);
-//         players_fd[player] = accept(sock_fd, (struct sockaddr *)&client_addr, &size_addr);
+    char aux[128]={'\0'}, buffer[128]={'\0'};
 
-//         write(players_fd[player], &dim, sizeof(dim));
-//         stcpy(color, rand_color());
-//         write(players_fd[player], color, strlen(color));
-
-//         send_state_board(players_fd[player]);
-
-//         player++;
-//     }
-
-//     pthread_exit(NULL);
-// }
-
-void * comunication_server_players(void * arg)
-{
-    int fd = *(int *)arg;
-    int x=0, y=0;
-    char buffer[128]={'\0'};
-    player_t *current = players_list_head;
-    play_response resp;
-
-    while (1)
-    {
-        memset(buffer, 0, BUFFER_SIZE);
-        read(fd, buffer, strlen(buffer));
-        buffer(strlen(buffer))='\0';
-
-        sscanf(buffer, "%d/%d", &x, &y);
-
-        memset(buffer, 0, BUFFER_SIZE);
-        resp = board_play(int x, int y);
-
-        sprintf(aux, "%d", resp.code)
+        sprintf(aux, "%d", resp.code);
         strcpy(buffer, aux);
         strcat(buffer, "/");
         sprintf(aux, "%d", resp.play1[0]);
@@ -77,17 +41,48 @@ void * comunication_server_players(void * arg)
         strcat(buffer, resp.str_play1);
         strcat(buffer, "/");
         strcat(buffer, resp.str_play2);
+    
+    return buffer;
+}
 
+void * comunication_server_players(void * arg)
+{
+    int fd = *(int *)arg;
+    int x=0, y=0;
+    char buffer[128]={'\0'}, aux[128]={'\0'};
+    player_t *current = players_list_head;
+    play_response resp;
+
+    while (1)
+    {
+        memset(buffer, 0, BUFFER_SIZE);
+        read(fd, buffer, strlen(buffer));
+        buffer[strlen(buffer)] = '\0';
+
+        sscanf(buffer, "%d/%d", &x, &y);
+
+        memset(buffer, 0, BUFFER_SIZE);
+        resp = board_play( x, y);
+
+        strcpy(buffer, build_resp(resp));
         write(current->fd, buffer, strlen(buffer));
-
+        
         memset(buffer, 0, BUFFER_SIZE);
         sprintf(aux, "%d", x);
         strcat(buffer, aux);
         strcat(buffer, "/");
         sprintf(aux, "%d", x);
+        strcat(buffer, aux);  
+        while (current->next != NULL)
+        {   
+            if(current->fd != fd)
+                current = current->next;
+        }
+        sprintf(aux, "%d/%d/%d", current->color[0], current->color[1], current->color[2]);
         strcat(buffer, aux);
-        // falta adicionar as cores do player que fez a jogada
 
+        // falta adicionar as cores do player que fez a jogada
+        current = players_list_head;
         while (current->next != NULL)
         {   if(current->fd != fd)
                 write(current->fd, buffer, strlen(buffer));
@@ -98,11 +93,11 @@ void * comunication_server_players(void * arg)
 }
 
 int  translate_i_to_x(int i, int dim_board){
-    x = i%dim_board;
+    int x = i%dim_board;
     return x;
 }
 int  translate_i_to_y(int i, int dim_board){
-    y = i/dim_board;
+    int y = i/dim_board;
     return y;
 }
 
@@ -313,14 +308,13 @@ void main(int argc, char *argv[])
                 //pthread_create(&thread_ID, NULL, comunication_server_players, players_list_head->fd);
             }
     
-
         if (send_state == 1)
         {
             player_t *current = players_list_head;
 
             while (current != NULL)
             {
-                send_state_board(current->fd);
+                send_state_board(current->fd, dim);
                 current = current->next;
 
             }
