@@ -1,0 +1,14 @@
+Server:
+-- Timer of second play
+
+-- acabar send_played_card_to_all function
+
+-- switch play 1, acabar casos
+
+
+
+
+Cliente:
+-- Receber mensagem de position_filled
+
+-- Atualizar cores da board consoante a mensagem recebida do server

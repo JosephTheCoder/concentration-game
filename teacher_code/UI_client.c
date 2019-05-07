@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
     ssize_t n;
     socklen_t addrlen;
     struct sockaddr_in server_addr;
-    char buffer[BUF FER_SIZE];
+    char buffer[BUFFER_SIZE];
 
     play_response resp;
 
@@ -93,6 +93,7 @@ int main(int argc, char *argv[])
         else
         {
             
+            // Player connected when the game is already running
 
         }
 
@@ -137,6 +138,8 @@ int main(int argc, char *argv[])
 
                 switch (resp.code)
                 {
+                case 0:
+                
                 case 1:
                     paint_card(resp.play1[0], resp.play1[1], color[0], color[1], color[2]);
                     write_card(resp.play1[0], resp.play1[1], resp.str_play1, 200, 200, 200);

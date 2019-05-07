@@ -6,7 +6,7 @@
 
 #include <time.h>
 
-pthread_mutex_t lock; 
+pthread_mutex_t lock;
 player_t *players_list_head = NULL;
 
 int *random_color()
@@ -44,13 +44,16 @@ void *read_second_play(void *arg)
     pthread_exit(resp.code);
 }
 
-void *send_played_card_to_all(void *arg)
+//
+void *send_played_card_to_all(void *arg) //arg = string com posição jogada
 {
     char info[10] = *(char *)arg;
     player_t *current = players_list_head;
 
     while (current->next != NULL)
     {
+        memset(buffer, 0, BUFFER_SIZE); //erase buffer before inserting data
+        sprintf(buffer, "%d", dim);
         write(current->fd, buffer, strlen(buffer));
         current = current->next;
     }
@@ -59,9 +62,9 @@ void *send_played_card_to_all(void *arg)
 void *read_first_play(void *arg)
 {
     // inserir mutexes nesta thread para evitar que dois clientes carreguem na mesma caixa na board
-   
+
     int fd = *(int *)arg;
-    int x = 0, y = 0, code=0;
+    int x = 0, y = 0, code = 0;
     char buffer[128] = {'\0'};
     char aux[128] = {'\0'};
     player_t *current = players_list_head;
@@ -85,10 +88,13 @@ void *read_first_play(void *arg)
         {
         case 0:
             /* chose filled position - Does nothing */
+            memset(buffer, 0, BUFFER_SIZE); //erase buffer before inserting data
+            sprintf(buffer, "%d/%d/%d/%d", resp.code, x, y, );
+            write(fd, buffer, sizeof(buffer));
             break;
         case 1:
             /* first play */
-            
+
             memset(buffer, 0, BUFFER_SIZE);
             sprintf(aux, "%d", x);
             strcat(buffer, aux);
@@ -96,31 +102,31 @@ void *read_first_play(void *arg)
             sprintf(aux, "%d", y);
             strcat(buffer, aux);
 
-            break;
-
             //creates thread for second play, (read with timer)
             pthread_create(&thread_ID2, NULL, read_second_play, fd);
             //pthread join, receives code as return
             pthread_join(thread_ID2, code);
-                 switch (code)
-                {
-                    case 0:
-                        /* chose filled position - Does nothing */
-                        break;
-                    case 1:
-                        //switch code
-                        //case 2
-                        //case 3
-                        //case different
+            switch (code)
+            {
+            case 0:
+                /* chose filled position - Does nothing */
+                break;
+            case 1:
+                //switch code
+                //case 2
+                //case 3
+                //case different
+            }
 
-                }
+            write(current->fd, buffer, strlen(buffer));
 
-        write(current->fd, buffer, strlen(buffer));
+            break;
 
+            // falta adicionar as cores do player que fez a jogada
+        }
         pthread_mutex_unlock(&lock);
-        // falta adicionar as cores do player que fez a jogada
+        pthread_exit(NULL);
     }
-    pthread_exit(NULL);
 }
 
 int translate_i_to_x(int i, int dim_board)
@@ -137,7 +143,7 @@ int translate_i_to_y(int i, int dim_board)
 
 void send_state_board(int fd, int dim_board)
 {
-    int i=0;
+    int i = 0;
     char str[12];
     char color[11] = {'\0'};
     int sent_cell = 0;
@@ -353,8 +359,8 @@ void main(int argc, char *argv[])
 
         pthread_create(&thread_ID, NULL, read_first_play, new_fd);
     }
-    
-    pthread_mutex_destroy(&lock); 
+
+    pthread_mutex_destroy(&lock);
 
     close(sock_fd);
 }
