@@ -44,6 +44,18 @@ void *read_second_play(void *arg)
     pthread_exit(resp.code);
 }
 
+void *send_played_card_to_all(void *arg)
+{
+    char info[10] = *(char *)arg;
+    player_t *current = players_list_head;
+
+    while (current->next != NULL)
+    {
+        write(current->fd, buffer, strlen(buffer));
+        current = current->next;
+    }
+}
+
 void *read_first_play(void *arg)
 {
     // inserir mutexes nesta thread para evitar que dois clientes carreguem na mesma caixa na board
@@ -55,6 +67,8 @@ void *read_first_play(void *arg)
     player_t *current = players_list_head;
     pthread_t thread_ID2;
     play_response resp;
+
+    pthread_t thread_ID;
 
     while (1)
     {
@@ -82,12 +96,6 @@ void *read_first_play(void *arg)
             sprintf(aux, "%d", y);
             strcat(buffer, aux);
 
-            while (current->next != NULL)
-            {
-                if (current->fd != fd)
-                    write(current->fd, buffer, strlen(buffer));
-                current = current->next;
-            }
             break;
 
             //creates thread for second play, (read with timer)
@@ -328,10 +336,19 @@ void main(int argc, char *argv[])
         sprintf(buffer, "%d/%d/%d", color[0], color[1], color[2]);
         write(new_fd, buffer, sizeof(buffer));
 
-        // only start the game when the second player connects
-        if (nr_players == 2) //if(nr_players > 1)
-        {
+        // only start the game when there is more than 1 player
+        if (nr_players == 2)
             send_state = 1;
+
+        if (send_state == 1)
+        {
+            player_t *current = players_list_head;
+
+            while (current != NULL)
+            {
+                send_state_board(current->fd, dim);
+                current = current->next;
+            }
         }
 
         pthread_create(&thread_ID, NULL, read_first_play, new_fd);
