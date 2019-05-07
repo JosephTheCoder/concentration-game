@@ -6,10 +6,12 @@
 
 #include <time.h>
 
-pthread_mutex_t lock; 
+pthread_mutex_t **lock; 
 player_t *players_list_head = NULL;
 
-player_t * find_fd_list(fd){
+/**************************************************************************************************/
+
+player_t * find_fd_list(int fd){
 
     player_t *current = players_list_head;
 
@@ -21,6 +23,21 @@ player_t * find_fd_list(fd){
 return current;
 }
 
+/**************************************************************************************************/
+
+void write_in_board(int x, int y, int fd){
+    
+    int i=0;
+    player_t *current;
+    current= find_fd_list(fd);
+
+    i= linear_conv(x,y);
+    board[i].color[0]=current->color[0];
+    board[i].color[1]=current->color[1];
+    board[i].color[2]=current->color[2];
+
+}
+/**************************************************************************************************/
 
 int *random_color()
 {
@@ -32,6 +49,9 @@ int *random_color()
 
     return color;
 }
+
+/**************************************************************************************************/
+
 
 void *read_second_play(void *arg)
 {
@@ -57,6 +77,8 @@ void *read_second_play(void *arg)
     pthread_exit(resp.code);
 }
 
+/**************************************************************************************************/
+
 void *send_played_card_to_all(void *arg)
 {
     char buffer[128] = *(char *)arg;
@@ -68,6 +90,8 @@ void *send_played_card_to_all(void *arg)
         current = current->next;
     }
 }
+
+/**************************************************************************************************/
 
 void *read_first_play(void *arg)
 {
@@ -92,29 +116,21 @@ void *read_first_play(void *arg)
 
         sscanf(buffer, "%d/%d", &x, &y);
 
-        pthread_mutex_lock(&lock);
+        pthread_mutex_lock(&lock[x][y]);
         resp = board_play(x, y);
+        write_in_board(x, y, fd);
 
         switch (resp.code)
         {
         case 0:
             /* chose filled position - Does nothing */
+
             break;
         case 1:
             /* first play */
-            memset(buffer, 0, BUFFER_SIZE);
-            sprintf(aux, "%d", x);
-            strcat(buffer, aux);
-            strcat(buffer, "/");
-            sprintf(aux, "%d", y);
-            strcat(buffer, aux);
-            strcat(buffer, "/");
-            current = find_fd_list(fd);
-            strcat(buffer, current->color);
 
+            // construção buffer
             pthread_create(thread_ID_sendPlays, NULL, send_played_card_to_all, buffer);
-            
-            //write(current->fd, buffer, strlen(buffer));
 
             //creates thread for second play, (read with timer)
             pthread_create(&thread_ID_secondPlay, NULL, read_second_play, fd);
@@ -125,18 +141,30 @@ void *read_first_play(void *arg)
                 {
                     case 0:
                         /* chose filled position - Does nothing */
+                        // construção buffer a dizer "nononono", virar 1a carta para baixo
+                        pthread_create(thread_ID_sendPlays, NULL, send_played_card_to_all, buffer);
                         break;
-                    case 1:
-                        //switch code
-                        //case 2
-                        //case 3
-                        //case different
+
+                    case 2:
+                        pthread_create(thread_ID_sendPlays, NULL, send_played_card_to_all, buffer);
+       
+                    case -2:
+                        // buffer a virar a carta para cima
+                        pthread_create(thread_ID_sendPlays, NULL, send_played_card_to_all, buffer);
+                        pthread_join(thread_ID_sendPlays, NULL);
+                        sleep(2);
+                        // buffer a virar as cartas para baixo
+                        pthread_create(thread_ID_sendPlays, NULL, send_played_card_to_all, buffer);
+                        // buffer a virar as cartas para baixo
+                        pthread_create(thread_ID_sendPlays, NULL, send_played_card_to_all, buffer);
+                        
+                    case 3:
+                         //fim do jogo
+                         //envia win ou loose
                 }
-        
           
-            break;
+         break;
         
-        // falta adicionar as cores do player que fez a jogada
     }
     pthread_mutex_unlock(&lock);
     pthread_exit(NULL);
@@ -287,8 +315,16 @@ void main(int argc, char *argv[])
 
     init_board(dim);
 
+
+    lock = (pthread_mutex_t **) malloc(dim * sizeof(pthread_mutex_t*));
+    for(i=0; i< dim; i++){
+
+        lock[i]=(pthread_mutex_t *) malloc (sizeof(pthread_mutex_t));
+    }
+
     // ---- Setup TCP server ----
     int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
+
     if (sock_fd == -1)
     {
         perror("socket");
