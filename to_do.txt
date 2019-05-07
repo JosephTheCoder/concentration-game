@@ -1,0 +1,34 @@
+Server:
+-- Timer of second play
+
+-- acabar send_played_card_to_all function
+
+-- switch play 1, acabar casos
+
+
+
+
+Cliente:
+-- Receber mensagem de position_filled
+
+-- Atualizar cores da board consoante a mensagem recebida do server
+
+       
+            // case 3:
+            //     done = 1;
+            // case 2:
+            //     paint_card(resp.play1[0], resp.play1[1], color[0], color[1], color[2]);
+            //     write_card(resp.play1[0], resp.play1[1], resp.str_play1, 0, 0, 0);
+
+            //     paint_card(resp.play2[0], resp.play2[1], color[0], color[1], color[2]);
+            //     write_card(resp.play2[0], resp.play2[1], resp.str_play2, 0, 0, 0);
+            //     break;
+            // case -2:
+            //     paint_card(resp.play1[0], resp.play1[1], color[0], color[1], color[2]);
+            //     write_card(resp.play1[0], resp.play1[1], resp.str_play1, 255, 0, 0);
+            //     paint_card(resp.play2[0], resp.play2[1], color[0], color[1], color[2]);
+            //     write_card(resp.play2[0], resp.play2[1], resp.str_play2, 255, 0, 0);
+            //     sleep(2);
+            //     paint_card(resp.play1[0], resp.play1[1], 255, 255, 255);
+            //     paint_card(resp.play2[0], resp.play2[1], 255, 255, 255);
+            //     break;

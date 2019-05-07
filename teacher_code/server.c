@@ -17,10 +17,10 @@ player_t * find_fd_list(int fd){
 
     while (current->next != NULL)
     {
-    if(current->fd!=fd)
+        if (current->fd != fd)
             current = current->next;
     }
-return current;
+    return current;
 }
 
 /**************************************************************************************************/
@@ -77,15 +77,16 @@ void *read_second_play(void *arg)
     pthread_exit(resp.code);
 }
 
-/**************************************************************************************************/
-
-void *send_played_card_to_all(void *arg)
+//
+void *send_played_card_to_all(void *arg) //arg = string com posição jogada
 {
     char buffer[128] = *(char *)arg;
     player_t *current = players_list_head;
 
     while (current->next != NULL)
     {
+        memset(buffer, 0, BUFFER_SIZE); //erase buffer before inserting data
+        sprintf(buffer, "%d", dim);
         write(current->fd, buffer, strlen(buffer));
         current = current->next;
     }
@@ -96,9 +97,9 @@ void *send_played_card_to_all(void *arg)
 void *read_first_play(void *arg)
 {
     // inserir mutexes nesta thread para evitar que dois clientes carreguem na mesma caixa na board
-   
+
     int fd = *(int *)arg;
-    int x = 0, y = 0, code=0;
+    int x = 0, y = 0, code = 0;
     char buffer[128] = {'\0'};
     char aux[128] = {'\0'};
     player_t *current = players_list_head;
@@ -120,14 +121,21 @@ void *read_first_play(void *arg)
         resp = board_play(x, y);
         write_in_board(x, y, fd);
 
+        current = find_fd_list(fd);
+
         switch (resp.code)
         {
         case 0:
             /* chose filled position - Does nothing */
-
+            memset(buffer, 0, BUFFER_SIZE); //erase buffer before inserting data
+            sprintf(buffer, "%d", &resp.code);
+            write(fd, buffer, sizeof(buffer));
             break;
         case 1:
             /* first play */
+            memset(buffer, 0, BUFFER_SIZE);
+            sprintf(buffer, "%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d", &resp.code, &resp.play1[0], &resp.play1[1], &resp.str_play1[0], &resp.str_play1[1], &resp.str_play1[2], &current->color[0], &current->color[1], &current->color[2], 200, 200, 200);
+            
 
             // construção buffer
             pthread_create(thread_ID_sendPlays, NULL, send_played_card_to_all, buffer);
@@ -166,8 +174,6 @@ void *read_first_play(void *arg)
          break;
         
     }
-    pthread_mutex_unlock(&lock);
-    pthread_exit(NULL);
 }
 
 int translate_i_to_x(int i, int dim_board)
@@ -184,7 +190,7 @@ int translate_i_to_y(int i, int dim_board)
 
 void send_state_board(int fd, int dim_board)
 {
-    int i=0;
+    int i = 0;
     char str[12];
     char color[11] = {'\0'};
     int sent_cell = 0;
@@ -392,7 +398,8 @@ void main(int argc, char *argv[])
         write(new_fd, buffer, sizeof(buffer));
 
         // only start the game when there is more than 1 player
-        if (nr_players == 2){
+        if (nr_players == 2)
+        {
             send_state = 1;
         }
         if (send_state == 1)
@@ -408,8 +415,8 @@ void main(int argc, char *argv[])
 
         pthread_create(&thread_ID, NULL, read_first_play, new_fd);
     }
-    
-    pthread_mutex_destroy(&lock); 
+
+    pthread_mutex_destroy(&lock);
 
     close(sock_fd);
 }
