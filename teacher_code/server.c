@@ -6,6 +6,7 @@
 
 #include <time.h>
 
+pthread_mutex_t lock; 
 player_t *players_list_head = NULL;
 
 int *random_color()
@@ -43,13 +44,16 @@ void *read_second_play(void *arg)
     pthread_exit(resp.code);
 }
 
-void *comunication_server_players(void *arg)
+void *read_first_play(void *arg)
 {
+    // inserir mutexes nesta thread para evitar que dois clientes carreguem na mesma caixa na board
+   
     int fd = *(int *)arg;
-    int x = 0, y = 0;
+    int x = 0, y = 0, code=0;
     char buffer[128] = {'\0'};
     char aux[128] = {'\0'};
     player_t *current = players_list_head;
+    pthread_t thread_ID2;
     play_response resp;
 
     while (1)
@@ -59,27 +63,18 @@ void *comunication_server_players(void *arg)
         buffer[strlen(buffer)] = '\0';
 
         sscanf(buffer, "%d/%d", &x, &y);
+
+        pthread_mutex_lock(&lock);
         resp = board_play(x, y);
 
         switch (resp.code)
         {
         case 0:
-            /* chose filled position */
+            /* chose filled position - Does nothing */
             break;
-
         case 1:
             /* first play */
-
-            //created thread to send color to all players
-
-            //creates thread for second play, (read with timer)
-
-            //pthread join, receives code as return
-            //switch code
-            //case 2
-            //case 3
-            //case different
-
+            
             memset(buffer, 0, BUFFER_SIZE);
             sprintf(aux, "%d", x);
             strcat(buffer, aux);
@@ -94,10 +89,27 @@ void *comunication_server_players(void *arg)
                 current = current->next;
             }
             break;
-        }
+
+            //creates thread for second play, (read with timer)
+            pthread_create(&thread_ID2, NULL, read_second_play, fd);
+            //pthread join, receives code as return
+            pthread_join(thread_ID2, code);
+                 switch (code)
+                {
+                    case 0:
+                        /* chose filled position - Does nothing */
+                        break;
+                    case 1:
+                        //switch code
+                        //case 2
+                        //case 3
+                        //case different
+
+                }
 
         write(current->fd, buffer, strlen(buffer));
 
+        pthread_mutex_unlock(&lock);
         // falta adicionar as cores do player que fez a jogada
     }
     pthread_exit(NULL);
@@ -117,7 +129,7 @@ int translate_i_to_y(int i, int dim_board)
 
 void send_state_board(int fd, int dim_board)
 {
-    int i;
+    int i=0;
     char str[12];
     char color[11] = {'\0'};
     int sent_cell = 0;
@@ -320,11 +332,12 @@ void main(int argc, char *argv[])
         if (nr_players == 2) //if(nr_players > 1)
         {
             send_state = 1;
-            //pthread_create(&thread_ID, NULL, comunication_server_players, players_list_head->fd);
         }
 
-        pthread_create(&thread_ID, NULL, comunication_server_players, new_fd);
+        pthread_create(&thread_ID, NULL, read_first_play, new_fd);
     }
+    
+    pthread_mutex_destroy(&lock); 
 
     close(sock_fd);
 }

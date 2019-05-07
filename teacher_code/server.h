@@ -25,7 +25,8 @@ char buffer[BUFFER_SIZE];
 int  translate_i_to_x();
 int  translate_i_to_y();
 char build_resp();
-void * comunication_server_players();
+void *read_first_play();
+void *read_second_play();
 
 void server_fcn();
 void * thread_fcn();
