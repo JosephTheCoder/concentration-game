@@ -9,6 +9,7 @@
 #include "board_library.h"
 #include "UI_library.h"
 #include "server.h"
+#include "UI_client.h"
 
 #define BUFFER_SIZE 128
 
@@ -20,9 +21,11 @@ int main(int argc, char *argv[])
     struct sockaddr_in server_addr;
     char buffer[BUFFER_SIZE];
 
-    play_response resp;
+    server_response resp;
+    int code;
 
     int color[3];
+    int my_color[3];
 
     SDL_Event event;
     int done = 0;
@@ -74,7 +77,7 @@ int main(int argc, char *argv[])
     printf("board dimension: %d\n", dim);
     create_board_window(300, 300, dim);
 
-    printf("player color: [%d,%d,%d]\n", color[0], color[1], color[2]);
+    printf("player color: [%d,%d,%d]\n", my_color[0], my_color[1], my_color[2]);
 
     for (int i = 0; i < dim * dim; i++)
     {
@@ -92,14 +95,17 @@ int main(int argc, char *argv[])
         }
         else
         {
-            
-            // Player connected when the game is already running
 
+            // Player connected when the game is already running
         }
 
         printf("Cell %d info received!\n", i);
         printf("%s\n", buffer);
     }
+
+    //start thread para ler mensagens de pinturas do servidor
+
+    //uma thread a ler os eventos do rato e outra a receber mensagens
 
     /* Start game (copy from memory-single) */
     while (!done)
@@ -134,40 +140,25 @@ int main(int argc, char *argv[])
                     exit(-1);
                 }
 
-                sscanf(buffer, "%d/%d/%d/%d/%d/%d/%d/%d/%d", &resp.code, &resp.play1[0], &resp.play1[1], &resp.str_play1[0], &resp.str_play1[1], &resp.str_play1[2], &resp.str_play2[0], &resp.str_play2[1], &resp.str_play2[2]);
+                sscanf(buffer, "%d/%d/%d/%d/%d/%d/%d/%d/%d", &code, &resp.play[0], &resp.play[1], &resp.str_play[0], &resp.str_play[1], &resp.str_play[2], &color[0], &color[1], &color[2]);
 
-                switch (resp.code)
+                if (code == 3)
                 {
-                case 0:
-                
-                case 1:
-                    paint_card(resp.play1[0], resp.play1[1], color[0], color[1], color[2]);
-                    write_card(resp.play1[0], resp.play1[1], resp.str_play1, 200, 200, 200);
-                    break;
-                case 3:
-                    done = 1;
-                case 2:
-                    paint_card(resp.play1[0], resp.play1[1], color[0], color[1], color[2]);
-                    write_card(resp.play1[0], resp.play1[1], resp.str_play1, 0, 0, 0);
-                    paint_card(resp.play2[0], resp.play2[1], color[0], color[1], color[2]);
-                    write_card(resp.play2[0], resp.play2[1], resp.str_play2, 0, 0, 0);
-                    break;
-                case -2:
-                    paint_card(resp.play1[0], resp.play1[1], color[0], color[1], color[2]);
-                    write_card(resp.play1[0], resp.play1[1], resp.str_play1, 255, 0, 0);
-                    paint_card(resp.play2[0], resp.play2[1], color[0], color[1], color[2]);
-                    write_card(resp.play2[0], resp.play2[1], resp.str_play2, 255, 0, 0);
-                    sleep(2);
-                    paint_card(resp.play1[0], resp.play1[1], 255, 255, 255);
-                    paint_card(resp.play2[0], resp.play2[1], 255, 255, 255);
-                    break;
+                    //acabou
                 }
-            }
+
+                else
+                {
+                    paint_card(resp.play[0], resp.play[1], color[0], color[1], color[2]);
+                    write_card(resp.play[0], resp.play[1], resp.str_play, 200, 200, 200); //receive text color from server
+                }
             }
         }
     }
-    printf("fim\n");
-    close_board_windows();
+}
 
-    close(fd);
+printf("fim\n");
+close_board_windows();
+
+close(fd);
 }
