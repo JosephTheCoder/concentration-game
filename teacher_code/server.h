@@ -31,7 +31,16 @@ void *read_second_play();
 void server_fcn();
 void * thread_fcn();
 
+int translate_i_to_x(int i, int dim_board);
+
+int translate_i_to_y(int i, int dim_board);
+
+player_t * find_fd_list();
+void write_in_board();
 int *random_color();
+void *read_second_play(void *arg);
+void *send_played_card_to_all(void *arg);
+void *read_first_play(void *arg);
 void send_state_board(int fd, int dim);
 void push_to_list(player_t *head, int *color, int fd);
 int remove_from_list(player_t **head, int number);
