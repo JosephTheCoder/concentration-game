@@ -113,7 +113,6 @@ void *read_first_play(void *arg)
             memset(buffer, 0, BUFFER_SIZE);
             sprintf(buffer, "%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d", &resp.code, &resp.play1[0], &resp.play1[1], &resp.str_play1[0], &resp.str_play1[1], &resp.str_play1[2], &current->color[0], &current->color[1], &current->color[2], 200, 200, 200);
             
-
             pthread_create(thread_ID_sendPlays, NULL, send_played_card_to_all, buffer);
 
             //creates thread for second play, (read with timer)

@@ -26,6 +26,7 @@ int main(int argc, char *argv[])
 
     int color[3];
     int my_color[3];
+    int text_color[3];
 
     SDL_Event event;
     int done = 0;
@@ -140,11 +141,16 @@ int main(int argc, char *argv[])
                     exit(-1);
                 }
 
-                sscanf(buffer, "%d/%d/%d/%d/%d/%d/%d/%d/%d", &code, &resp.play[0], &resp.play[1], &resp.str_play[0], &resp.str_play[1], &resp.str_play[2], &color[0], &color[1], &color[2]);
+                sscanf(buffer, "%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d", &code, &resp.play[0], &resp.play[1], &resp.str_play[0], &resp.str_play[1], &resp.str_play[2], &color[0], &color[1], &color[2], &text_color[0], &text_color[1], &text_color[2]);
 
                 if (code == 3)
                 {
                     //acabou
+                }
+
+                else if (code == 0)
+                {
+                    // does nothing
                 }
 
                 else
