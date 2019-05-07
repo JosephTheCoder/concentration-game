@@ -9,6 +9,19 @@
 pthread_mutex_t lock; 
 player_t *players_list_head = NULL;
 
+player_t * find_fd_list(fd){
+
+    player_t *current = players_list_head;
+
+    while (current->next != NULL)
+    {
+    if(current->fd!=fd)
+            current = current->next;
+    }
+return current;
+}
+
+
 int *random_color()
 {
     static int color[3];
@@ -46,7 +59,7 @@ void *read_second_play(void *arg)
 
 void *send_played_card_to_all(void *arg)
 {
-    char info[10] = *(char *)arg;
+    char buffer[128] = *(char *)arg;
     player_t *current = players_list_head;
 
     while (current->next != NULL)
@@ -65,7 +78,8 @@ void *read_first_play(void *arg)
     char buffer[128] = {'\0'};
     char aux[128] = {'\0'};
     player_t *current = players_list_head;
-    pthread_t thread_ID2;
+
+    pthread_t thread_ID_secondPlay, thread_ID_sendPlays;
     play_response resp;
 
     pthread_t thread_ID;
@@ -88,21 +102,26 @@ void *read_first_play(void *arg)
             break;
         case 1:
             /* first play */
-            
             memset(buffer, 0, BUFFER_SIZE);
             sprintf(aux, "%d", x);
             strcat(buffer, aux);
             strcat(buffer, "/");
             sprintf(aux, "%d", y);
             strcat(buffer, aux);
+            strcat(buffer, "/");
+            current = find_fd_list(fd);
+            strcat(buffer, current->color);
 
-            break;
+            pthread_create(thread_ID_sendPlays, NULL, send_played_card_to_all, buffer);
+            
+            //write(current->fd, buffer, strlen(buffer));
 
             //creates thread for second play, (read with timer)
-            pthread_create(&thread_ID2, NULL, read_second_play, fd);
+            pthread_create(&thread_ID_secondPlay, NULL, read_second_play, fd);
             //pthread join, receives code as return
-            pthread_join(thread_ID2, code);
-                 switch (code)
+            pthread_join(thread_ID_secondPlay, code);
+
+                switch (code)
                 {
                     case 0:
                         /* chose filled position - Does nothing */
@@ -112,14 +131,14 @@ void *read_first_play(void *arg)
                         //case 2
                         //case 3
                         //case different
-
                 }
-
-        write(current->fd, buffer, strlen(buffer));
-
-        pthread_mutex_unlock(&lock);
+        
+          
+            break;
+        
         // falta adicionar as cores do player que fez a jogada
     }
+    pthread_mutex_unlock(&lock);
     pthread_exit(NULL);
 }
 
@@ -337,9 +356,9 @@ void main(int argc, char *argv[])
         write(new_fd, buffer, sizeof(buffer));
 
         // only start the game when there is more than 1 player
-        if (nr_players == 2)
+        if (nr_players == 2){
             send_state = 1;
-
+        }
         if (send_state == 1)
         {
             player_t *current = players_list_head;
