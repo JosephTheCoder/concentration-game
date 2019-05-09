@@ -145,8 +145,9 @@ int main(int argc, char *argv[])
                 if (code == 3)
                 {
                     //acabou
-                }
+                }else if(code==0){
 
+                }
                 else
                 {
                     paint_card(resp.play[0], resp.play[1], color[0], color[1], color[2]);

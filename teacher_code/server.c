@@ -96,7 +96,6 @@ void *send_played_card_to_all(void *arg) //arg = string com posição jogada
 
 void *read_first_play(void *arg)
 {
-    // inserir mutexes nesta thread para evitar que dois clientes carreguem na mesma caixa na board
 
     int fd = *(int *)arg;
     int x = 0, y = 0, code = 0;
@@ -107,7 +106,6 @@ void *read_first_play(void *arg)
     pthread_t thread_ID_secondPlay, thread_ID_sendPlays;
     play_response resp;
 
-    pthread_t thread_ID;
 
     while (1)
     {
@@ -136,7 +134,6 @@ void *read_first_play(void *arg)
             memset(buffer, 0, BUFFER_SIZE);
             sprintf(buffer, "%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d", &resp.code, &resp.play1[0], &resp.play1[1], &resp.str_play1[0], &resp.str_play1[1], &resp.str_play1[2], &current->color[0], &current->color[1], &current->color[2], 200, 200, 200);
             
-
             // construção buffer
             pthread_create(thread_ID_sendPlays, NULL, send_played_card_to_all, buffer);
 
