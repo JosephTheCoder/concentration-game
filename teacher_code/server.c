@@ -12,7 +12,6 @@ player_t *players_list_head = NULL;
 
 player_t *find_fd_list(int fd)
 {
-
     player_t *current = players_list_head;
 
     while (current->next != NULL)
@@ -20,6 +19,7 @@ player_t *find_fd_list(int fd)
         if (current->fd != fd)
             current = current->next;
     }
+    
     return current;
 }
 
@@ -28,6 +28,7 @@ player_t *find_fd_list(int fd)
 void update_cell_color(int x, int y, int r, int g, int b)
 {
     int i = linear_conv(x, y);
+
     board[i].color[0] = r;
     board[i].color[1] = g;
     board[i].color[2] = b;
@@ -74,8 +75,6 @@ void *read_second_play(void *arg)
 //
 void *send_play_to_all(void *buffer) //arg = string com posição jogada
 {
-    // char **buffer = (char**)arg;
-    //char buffer[128] = *(char *)arg;
     player_t *current = players_list_head;
 
     while (current->next != NULL)
