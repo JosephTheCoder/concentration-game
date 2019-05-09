@@ -6,16 +6,16 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
+#include "board_library.h"
 #include "UI_library.h"
+#include "server.h"
 #include "UI_client.h"
 
 #define BUFFER_SIZE 128
 
 int main(int argc, char *argv[])
 {
-    int fd;
-    ssize_t n;
-    socklen_t addrlen;
+
     struct sockaddr_in server_addr;
     char buffer[BUFFER_SIZE];
 
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    sscanf(buffer, "%d/%d/%d/%d", &dim, &color[0], &color[1], &color[2]);
+    sscanf(buffer, "%d/%d/%d/%d", &dim, &my_color[0], &my_color[1], &my_color[2]);
 
     printf("board dimension: %d\n", dim);
     create_board_window(300, 300, dim);
@@ -138,9 +138,9 @@ int main(int argc, char *argv[])
                     perror("error reading play response");
                     exit(-1);
                 }
-
-                sscanf(buffer, "%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d", &code, &resp.play[0], &resp.play[1], &resp.str_play[0], &resp.str_play[1], &resp.str_play[2], &color[0], &color[1], &color[2], &text_color[0], &text_color[1], &text_color[2]);
-
+                
+                sscanf(buffer, "%d", &code);
+                
                 if (code == 3)
                 {
                     //acabou
@@ -148,10 +148,12 @@ int main(int argc, char *argv[])
                 else if (code == 0)
                 {
                     // does nothing
+                    sscanf(buffer, "0/%d/%d", &resp.play[0], &resp.play[1]);
+                    paint_card(resp.play[0], resp.play[1], 255, 255, 255);
                 }
-
                 else
                 {
+                    sscanf(buffer, "%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d", &code, &resp.play[0], &resp.play[1], resp.str_play[0], resp.str_play[1], resp.str_play[2], &color[0], &color[1], &color[2], &text_color[0], &text_color[1], &text_color[2]);
                     paint_card(resp.play[0], resp.play[1], color[0], color[1], color[2]);
                     write_card(resp.play[0], resp.play[1], resp.str_play, 200, 200, 200); //receive text color from server
                 }
@@ -163,5 +165,5 @@ int main(int argc, char *argv[])
 printf("fim\n");
 close_board_windows();
 
-close(fd);
+close(sock_fd);
 }

@@ -14,7 +14,7 @@ TARGET_server = server
 TARGET_client = client
 
 SRCFILES_client = UI_client.c
-INCFILES_client = UI_client.h UI_library.h
+INCFILES_client = board_library.h UI_client.h UI_library.h
 OBJFILES_client = client.o
 
 server: $(TARGET)
@@ -33,6 +33,6 @@ $(TARGET_client): $(OBJFILES_client)
 clean_client:
 	rm -f $(TARGET_client) $(OBJFILES_client) core.* #*
 
-server.o: server.c board_library.h server.h  UI_library.h
+server.o: server.c board_library.h server.h  UI_library.h 
 
-client.o: UI_client.c UI_client.h UI_library.h
+client.o: UI_client.c board_library.h UI_client.h UI_library.h
