@@ -17,7 +17,7 @@ SRCFILES_client = UI_client.c UI_library.c
 INCFILES_client = UI_client.h UI_library.h
 OBJFILES_client = client.o
 
-server: $(TARGET)
+server: $(TARGET_server)
 
 $(TARGET_server): $(OBJFILES_server)
 	$(CC) $(CFLAGS) $(SRCFILES_server) -o $(TARGET_server) -lm -pthread -lSDL2 -lSDL2_ttf
