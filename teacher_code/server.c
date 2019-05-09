@@ -145,13 +145,15 @@ void *read_first_play(void *arg)
             {
             case 0:
                 /* chose filled position - Does nothing */
-                // construção buffer a dizer "nononono", virar 1a carta para baixo
+                // construção buffer: resp.code é posto a -2 para virar 1a carta para baixo, (caso zero "does nothing")
+                memset(buffer, 0, BUFFER_SIZE);
+                sprintf(buffer, "-2/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d",  &resp.play1[0], &resp.play1[1], &resp.str_play1[0], &resp.str_play1[1], &resp.str_play1[2],255, 255, 255, 255, 255, 255);
                 pthread_create(thread_ID_sendPlays, NULL, send_played_card_to_all, buffer);
                 break;
 
             case 2:
                 pthread_create(thread_ID_sendPlays, NULL, send_played_card_to_all, buffer);
-
+                break;
             case -2:
                 // buffer a virar a carta para cima
                 //REVER CORES DO TEXTO E DA CELULA
@@ -173,12 +175,12 @@ void *read_first_play(void *arg)
                 // buffer a virar as cartas para baixo
                 memset(buffer, 0, BUFFER_SIZE);
                 sprintf(buffer, "%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d", &resp.code, &resp.play2[0], &resp.play2[1], &resp.str_play2[0], &resp.str_play2[1], &resp.str_play2[2], 255, 255, 255, 255, 255, 255);
-
                 pthread_create(thread_ID_sendPlays, NULL, send_played_card_to_all, buffer);
-
+                break;
             case 3:
                 //fim do jogo
                 //envia win ou loose
+                break;
             }
 
             break;
