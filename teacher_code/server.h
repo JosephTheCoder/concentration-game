@@ -1,8 +1,8 @@
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_ttf.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 #include <unistd.h>
-#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -31,16 +31,16 @@ void *read_second_play();
 void server_fcn();
 void * thread_fcn();
 
-int translate_i_to_x(int i, int dim_board);
+int translate_i_to_x(int, int);
 
-int translate_i_to_y(int i, int dim_board);
+int translate_i_to_y(int, int);
 
 player_t * find_fd_list();
 void write_in_board();
 int *random_color();
-void *read_second_play(void *arg);
-void *send_played_card_to_all(void *arg);
-void *read_first_play(void *arg);
-void send_state_board(int fd, int dim);
-void push_to_list(player_t *head, int *color, int fd);
-int remove_from_list(player_t **head, int number);
+void *read_second_play(void *);
+void *send_play_to_board(void *);
+void *read_first_play(void *);
+void send_state_board(int, int);
+void push_to_list(player_t *, int *, int);
+int remove_from_list(player_t **, int);
