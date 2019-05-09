@@ -6,9 +6,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 
-#include "board_library.h"
 #include "UI_library.h"
-#include "server.h"
 #include "UI_client.h"
 
 #define BUFFER_SIZE 128
