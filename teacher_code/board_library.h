@@ -21,6 +21,7 @@ board_place *board;
 int play1[2];
 int n_corrects;
 
-char * get_board_place_str(int i, int j);
-void init_board(int dim);
-play_response board_play (int x, int y);
+char * get_board_place_str(int, int);
+void init_board(int);
+play_response board_play (int, int);
+int linear_conv(int, int);
