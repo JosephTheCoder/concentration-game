@@ -108,7 +108,7 @@ void *read_first_play(void *sock_fd)
         pthread_mutex_lock(&lock[x][y]);
         resp = board_play(x, y);
 
-        switch (resp.code) 
+        switch (resp.code)
         {
         case 0:
             /* chose filled position - Does nothing */
@@ -122,7 +122,7 @@ void *read_first_play(void *sock_fd)
             sprintf(buffer, "%d/%d/%d/%s/%d/%d/%d/%d/%d/%d", resp.code, resp.play1[0], resp.play1[1], resp.str_play1, current->color[0], current->color[1], current->color[2], 200, 200, 200);
 
             update_cell_color(resp.play1[0], resp.play1[1], current->color[0], current->color[1], current->color[2]);
-            
+
             // construção buffer
             pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, buffer);
 
@@ -130,7 +130,7 @@ void *read_first_play(void *sock_fd)
             pthread_create(&thread_ID_secondPlay, NULL, read_second_play, sock_fd);
 
             //pthread join, receives code as return
-            pthread_join(thread_ID_secondPlay, (void *) code);
+            pthread_join(thread_ID_secondPlay, (void *)code);
 
             switch (code)
             {
@@ -204,7 +204,6 @@ void send_state_board(int fd, int dim_board)
     int i = 0;
     char str[12];
     char color[11] = {'\0'};
-    int sent_cell = 0;
 
     for (i = 0; i < dim * dim; i++)
     {
@@ -233,19 +232,17 @@ void send_state_board(int fd, int dim_board)
 
             printf("buffer: %s\n", buffer);
             write(fd, buffer, sizeof(buffer));
-
-            sent_cell = 1;
         }
     }
 
-    // in case of an empty board
-    if (sent_cell == 0)
-    {
-        strcpy(buffer, "empty_board");
-        write(fd, buffer, sizeof(buffer));
-    }
+    memset(buffer, 0, BUFFER_SIZE);
+    sprintf(buffer, "%s", "board_sent");
+
+    write(fd, buffer, sizeof(buffer));
+
 }
 
+// Change this to insert on the head of the list
 void push_to_list(player_t *head, int *color, int fd)
 {
     player_t *current = head;
@@ -327,17 +324,17 @@ int main(int argc, char *argv[])
     // dim < 26 e > 1
 
     // ---- Read dim argument and init board ----
-    if (argc != 2 || sscanf(argv[1], "%d", &dim) == 0 || dim > 26 || dim < 1 || dim%2 != 0)
+    if (argc != 2 || sscanf(argv[1], "%d", &dim) == 0 || dim > 26 || dim < 1 || dim % 2 != 0)
     {
         printf("Please provide a correct dimension argument.\n");
         exit(1);
     }
 
     init_board(dim);
+
     lock = (pthread_mutex_t **)malloc(dim * sizeof(pthread_mutex_t *));
     for (i = 0; i < dim; i++)
     {
-
         lock[i] = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
     }
 
@@ -416,6 +413,7 @@ int main(int argc, char *argv[])
         {
             send_state = 1;
         }
+
         if (send_state == 1)
         {
             player_t *current = players_list_head;

@@ -94,6 +94,7 @@ int main(int argc, char *argv[])
 
     printf("player color: [%d,%d,%d]\n", my_color[0], my_color[1], my_color[2]);
 
+    // WROOOONG
     for (int i = 0; i < dim * dim; i++)
     {
         memset(buffer, 0, BUFFER_SIZE);
@@ -103,15 +104,18 @@ int main(int argc, char *argv[])
             exit(-1);
         }
 
-        if (strcmp(buffer, "empty_board") == 0)
+        if (strcmp(buffer, "sent_board") == 0)
         {
-            printf("Board is still empty\n");
+            printf("Received all the board info\n");
             break;
         }
+
         else
         {
-
+            sscanf(buffer, "%d/%d/%d/%d", &dim, &my_color[0], &my_color[1], &my_color[2]);
             // Player connected when the game is already running
+
+            // UPDATE BOARD -----------------
         }
 
         printf("Cell %d info received!\n", i);
