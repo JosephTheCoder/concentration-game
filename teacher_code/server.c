@@ -48,7 +48,7 @@ int *random_color()
 
 /**************************************************************************************************/
 
-void *read_second_play(void *arg)
+void *read_second_play(void *sock_fd)
 {
     int fd = *((int *)arg);
     int x = 0, y = 0;
@@ -62,7 +62,7 @@ void *read_second_play(void *arg)
         //add timer
         //if timer ends -> pthread_exit(flag) = -1 (tempo acabou)
 
-        read(fd, buffer, strlen(buffer));
+        read(sock_fd, buffer, strlen(buffer));
         buffer[strlen(buffer)] = '\0';
 
         sscanf(buffer, "%d/%d", &x, &y);
@@ -88,9 +88,8 @@ void *send_play_to_all(void *buffer) //arg = string com posição jogada
 }
 
 /*****************************************************************************************+*****/
-void *read_first_play(void *arg)
+void *read_first_play(void *sock_fd)
 {
-    int fd = *((int *)arg);
     // inserir mutexes nesta thread para evitar que dois clientes carreguem na mesma caixa na board
     int x = 0, y = 0, code = 0;
     char buffer[128] = {'\0'};
@@ -99,12 +98,12 @@ void *read_first_play(void *arg)
     pthread_t thread_ID_secondPlay, thread_ID_sendPlays;
     play_response resp;
 
-    current = find_fd_list(fd);
+    current = find_fd_list(sock_fd);
 
     while (1)
     {
         memset(buffer, 0, BUFFER_SIZE);
-        read(fd, buffer, strlen(buffer));
+        read(sock_fd, buffer, strlen(buffer));
         buffer[strlen(buffer)] = '\0';
 
         sscanf(buffer, "%d/%d", &x, &y);
@@ -112,13 +111,13 @@ void *read_first_play(void *arg)
         pthread_mutex_lock(&lock[x][y]);
         resp = board_play(x, y);
 
-        switch (resp.code) 
+        switch (resp.code)
         {
         case 0:
             /* chose filled position - Does nothing */
             memset(buffer, 0, BUFFER_SIZE); //erase buffer before inserting data
             sprintf(buffer, "%d", resp.code);
-            write(fd, buffer, sizeof(buffer));
+            write(sock_fd, buffer, sizeof(buffer));
             break;
         case 1:
             /* first play */
@@ -126,7 +125,7 @@ void *read_first_play(void *arg)
             sprintf(buffer, "%d/%d/%d/%s/%d/%d/%d/%d/%d/%d", resp.code, resp.play1[0], resp.play1[1], resp.str_play1, current->color[0], current->color[1], current->color[2], 200, 200, 200);
 
             update_cell_color(resp.play1[0], resp.play1[1], current->color[0], current->color[1], current->color[2]);
-            
+
             // construção buffer
             pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
 
@@ -210,7 +209,6 @@ void send_state_board(int fd, int dim_board)
     int i = 0;
     char str[12];
     char color[11] = {'\0'};
-    int sent_cell = 0;
 
     for (i = 0; i < dim * dim; i++)
     {
@@ -239,19 +237,17 @@ void send_state_board(int fd, int dim_board)
 
             printf("buffer: %s\n", buffer);
             write(fd, buffer, sizeof(buffer));
-
-            sent_cell = 1;
         }
     }
 
-    // in case of an empty board
-    if (sent_cell == 0)
-    {
-        strcpy(buffer, "empty_board");
-        write(fd, buffer, sizeof(buffer));
-    }
+    memset(buffer, 0, BUFFER_SIZE);
+    sprintf(buffer, "%s", "board_sent");
+
+    write(fd, buffer, sizeof(buffer));
+
 }
 
+// Change this to insert on the head of the list
 void push_to_list(player_t *head, int *color, int fd)
 {
     player_t *current = head;
@@ -333,17 +329,17 @@ int main(int argc, char *argv[])
     // dim < 26 e > 1
 
     // ---- Read dim argument and init board ----
-    if (argc != 2 || sscanf(argv[1], "%d", &dim) == 0 || dim > 26 || dim < 1)
+    if (argc != 2 || sscanf(argv[1], "%d", &dim) == 0 || dim > 26 || dim < 1 || dim % 2 != 0)
     {
         printf("Please provide a correct dimension argument.\n");
         exit(1);
     }
 
     init_board(dim);
+
     lock = (pthread_mutex_t **)malloc(dim * sizeof(pthread_mutex_t *));
     for (i = 0; i < dim; i++)
     {
-
         lock[i] = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
     }
 
@@ -418,6 +414,7 @@ int main(int argc, char *argv[])
         {
             send_state = 1;
         }
+
         if (send_state == 1)
         {
             player_t *current = players_list_head;
