@@ -16,16 +16,35 @@
 
 #define BUFFER_SIZE 128
 
-// void *read_messages(void *buffer) //arg = string com posição jogada
-// {
-//     player_t *cur;
+void *read_play_response(void *buffer) //arg = string com posição jogada
+{
+    // Receive response from server
+    memset(buffer, 0, BUFFER_SIZE);
+    if (read(sock_fd, buffer, BUFFER_SIZE) == -1)
+    {
+        perror("error reading play response");
+        exit(-1);
+    }
 
-//     while (current->next != NULL)
-//     {
-//         write(current->fd, buffer, strlen(buffer));
-//         current = current->next;
-//     }
-// }
+    sscanf(buffer, "%d", &code);
+
+    if (code == 3)
+    {
+        //acabou
+    }
+    else if (code == 0)
+    {
+        // does nothing
+        sscanf(buffer, "0/%d/%d", &resp.play[0], &resp.play[1]);
+        paint_card(resp.play[0], resp.play[1], 255, 255, 255);
+    }
+    else
+    {
+        sscanf(buffer, "%d/%d/%d/%s/%d/%d/%d/%d/%d/%d", &code, &resp.play[0], &resp.play[1], resp.str_play, &color[0], &color[1], &color[2], &text_color[0], &text_color[1], &text_color[2]);
+        paint_card(resp.play[0], resp.play[1], color[0], color[1], color[2]);
+        write_card(resp.play[0], resp.play[1], resp.str_play, 200, 200, 200); //receive text color from server
+    }
+}
 
 int main(int argc, char *argv[])
 {
@@ -118,13 +137,8 @@ int main(int argc, char *argv[])
             // UPDATE BOARD -----------------
         }
 
-        printf("Cell %d info received!\n", i);
         printf("%s\n", buffer);
     }
-
-    //start thread para ler mensagens de pinturas do servidor
-
-    //uma thread a ler os eventos do rato e outra a receber mensagens
 
     /* Start game (copy from memory-single) */
     while (!done)
@@ -137,10 +151,15 @@ int main(int argc, char *argv[])
             {
                 done = SDL_TRUE;
                 // send message to server saying we're about to quit
+                memset(buffer, 0, BUFFER_SIZE);
+                sprintf(buffer, "exiting");
+                write(sock_fd, buffer, sizeof(buffer));
                 break;
             }
             case SDL_MOUSEBUTTONDOWN:
             {
+                // pthread_create(send_play)
+
                 int board_x, board_y;
                 get_board_card(event.button.x, event.button.y, &board_x, &board_y);
 
@@ -150,41 +169,13 @@ int main(int argc, char *argv[])
                 memset(buffer, 0, BUFFER_SIZE);
                 sprintf(buffer, "%d/%d", board_x, board_y);
                 write(sock_fd, buffer, sizeof(buffer));
-
-                // Receive response from server
-                memset(buffer, 0, BUFFER_SIZE);
-                if (read(sock_fd, buffer, BUFFER_SIZE) == -1)
-                {
-                    perror("error reading play response");
-                    exit(-1);
-                }
-                
-                sscanf(buffer, "%d", &code);
-                
-                if (code == 3)
-                {
-                    //acabou
-
-                }
-                else if (code == 0)
-                {
-                    // does nothing
-                    sscanf(buffer, "0/%d/%d", &resp.play[0], &resp.play[1]);
-                    paint_card(resp.play[0], resp.play[1], 255, 255, 255);
-                }
-                else
-                {
-                    sscanf(buffer, "%d/%d/%d/%s/%d/%d/%d/%d/%d/%d", &code, &resp.play[0], &resp.play[1], resp.str_play, &color[0], &color[1], &color[2], &text_color[0], &text_color[1], &text_color[2]);
-                    paint_card(resp.play[0], resp.play[1], color[0], color[1], color[2]);
-                    write_card(resp.play[0], resp.play[1], resp.str_play, 200, 200, 200); //receive text color from server
-                }
             }
             }
         }
     }
 
-printf("fim\n");
-close_board_windows();
+    printf("fim\n");
+    close_board_windows();
 
-close(sock_fd);
+    close(sock_fd);
 }
