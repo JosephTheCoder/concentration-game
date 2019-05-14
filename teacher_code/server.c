@@ -19,7 +19,7 @@ player_t *find_fd_list(int fd)
         if (current->fd != fd)
             current = current->next;
     }
-    
+
     return current;
 }
 
@@ -323,8 +323,11 @@ int main(int argc, char *argv[])
 
     srand(time(NULL));
 
+    // dim par
+    // dim < 26 e > 1
+
     // ---- Read dim argument and init board ----
-    if (argc != 2 || sscanf(argv[1], "%d", &dim) == 0)
+    if (argc != 2 || sscanf(argv[1], "%d", &dim) == 0 || dim > 26 || dim < 1)
     {
         printf("Please provide a correct dimension argument.\n");
         exit(1);
