@@ -40,6 +40,7 @@ void update_cell_color(int, int, int, int, int);
 int *random_color();
 void *read_second_play(void *);
 void *send_play_to_board(void *);
+void *send_play_to_all(void *);
 void *read_first_play(void *);
 void send_state_board(int, int);
 void push_to_list(player_t *, int *, int);

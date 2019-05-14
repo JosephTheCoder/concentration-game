@@ -99,12 +99,9 @@ int main(int argc, char *argv[])
         }
         else
         {
-
             // Player connected when the game is already running
+            printf("%s", buffer);
         }
-
-        printf("Cell %d info received!\n", i);
-        printf("%s\n", buffer);
     }
 
     //start thread para ler mensagens de pinturas do servidor
