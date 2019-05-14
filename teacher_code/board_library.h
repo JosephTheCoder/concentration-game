@@ -1,7 +1,11 @@
 #include <stdlib.h>
 
 typedef struct board_place{
+<<<<<<< HEAD
   char * v;
+=======
+  char v[3]; //change to dynamic allocation;
+>>>>>>> 9a29996a2f60924ee1f86cff838c9558c1d5492c
   int color[3]; // [r, g, b]
 } board_place;
 

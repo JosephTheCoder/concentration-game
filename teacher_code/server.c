@@ -12,7 +12,6 @@ player_t *players_list_head = NULL;
 
 player_t *find_fd_list(int fd)
 {
-
     player_t *current = players_list_head;
 
     while (current->next != NULL)
@@ -20,22 +19,19 @@ player_t *find_fd_list(int fd)
         if (current->fd != fd)
             current = current->next;
     }
+
     return current;
 }
 
 /**************************************************************************************************/
 
-void write_in_board(int x, int y, int fd)
+void update_cell_color(int x, int y, int r, int g, int b)
 {
+    int i = linear_conv(x, y);
 
-    int i = 0;
-    player_t *current;
-    current = find_fd_list(fd);
-
-    i = linear_conv(x, y);
-    board[i].color[0] = current->color[0];
-    board[i].color[1] = current->color[1];
-    board[i].color[2] = current->color[2];
+    board[i].color[0] = r;
+    board[i].color[1] = g;
+    board[i].color[2] = b;
 }
 /**************************************************************************************************/
 
@@ -80,14 +76,10 @@ void *read_second_play(void *arg)
 
 void *send_play_to_all(void *buffer) //arg = string com posição jogada
 {
-    // char **buffer = (char**)arg;
-    //char buffer[128] = *(char *)arg;
     player_t *current = players_list_head;
 
     while (current->next != NULL)
     {
-        memset(buffer, 0, BUFFER_SIZE); //erase buffer before inserting data
-        sprintf(buffer, "%d", dim);
         write(current->fd, buffer, strlen(buffer));
         current = current->next;
     }
@@ -105,6 +97,8 @@ void *read_first_play(void *arg)
     pthread_t thread_ID_secondPlay, thread_ID_sendPlays;
     play_response resp;
 
+    current = find_fd_list(fd);
+
     while (1)
     {
         memset(buffer, 0, BUFFER_SIZE);
@@ -115,9 +109,6 @@ void *read_first_play(void *arg)
 
         pthread_mutex_lock(&lock[x][y]);
         resp = board_play(x, y);
-        write_in_board(x, y, fd);
-
-        current = find_fd_list(fd);
 
         switch (resp.code) 
         {
@@ -132,11 +123,14 @@ void *read_first_play(void *arg)
             memset(buffer, 0, BUFFER_SIZE);
             sprintf(buffer, "%d/%d/%d/%s/%d/%d/%d/%d/%d/%d", resp.code, resp.play1[0], resp.play1[1], resp.str_play1, current->color[0], current->color[1], current->color[2], 200, 200, 200);
 
+            update_cell_color(resp.play1[0], resp.play1[1], current->color[0], current->color[1], current->color[2]);
+            
             // construção buffer
             pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, buffer);
 
             //creates thread for second play, (read with timer)
             pthread_create(&thread_ID_secondPlay, NULL, read_second_play, (void *) fd);
+
             //pthread join, receives code as return
             pthread_join(thread_ID_secondPlay, (void *) code);
 
@@ -147,6 +141,7 @@ void *read_first_play(void *arg)
                 // construção buffer a dizer "nononono", virar 1a carta para baixo
                 memset(buffer, 0, BUFFER_SIZE);
                 sprintf(buffer, "0/%d/%d/%d/%d/%d", resp.play1[0], resp.play1[1], 255, 255, 255);
+                update_cell_color(resp.play1[0], resp.play1[1], 107, 200, 100);
 
                 pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, buffer);
                 break;
@@ -157,28 +152,36 @@ void *read_first_play(void *arg)
             case -2:
                 // buffer a virar a carta para cima
                 //REVER CORES DO TEXTO E DA CELULA
-                //ATUALIZAR CORES DA VARIÁVEL BOARD
                 memset(buffer, 0, BUFFER_SIZE);
                 sprintf(buffer, "%d/%d/%d/%s/%d/%d/%d/%d/%d/%d", resp.code, resp.play2[0], resp.play2[1], resp.str_play2, current->color[0], current->color[1], current->color[2], 200, 200, 200);
+                update_cell_color(resp.play2[0], resp.play2[1], current->color[0], current->color[1], current->color[2]);
+
                 pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, buffer);
                 pthread_join(thread_ID_sendPlays, NULL);
                 sleep(2);
 
                 // buffer a virar as cartas para baixo
                 memset(buffer, 0, BUFFER_SIZE);
+
                 sprintf(buffer, "%d/%d/%d/%s/%d/%d/%d/%d/%d/%d", resp.code, resp.play1[0], resp.play1[1], resp.str_play1, 255, 255, 255, 255, 255, 255);
+                update_cell_color(resp.play1[0], resp.play1[1], 107, 200, 100);
 
                 pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, buffer);
 
                 // buffer a virar as cartas para baixo
                 memset(buffer, 0, BUFFER_SIZE);
                 sprintf(buffer, "%d/%d/%d/%s/%d/%d/%d/%d/%d/%d", resp.code, resp.play2[0], resp.play2[1], resp.str_play2, 255, 255, 255, 255, 255, 255);
+                update_cell_color(resp.play2[0], resp.play2[1], 107, 200, 100);
 
                 pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, buffer);
 
-            // case 3:
-            //     //fim do jogo
-            //     //envia win ou loose
+            case 3:
+                //envia a todos a info para virar a carta e que o jogador x ganhou
+                memset(buffer, 0, BUFFER_SIZE);
+                sprintf(buffer, "%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d", resp.code, current->number, resp.play2[0], resp.play2[1], resp.str_play2[0], resp.str_play2[1], resp.str_play2[2], 255, 255, 255, 255, 0, 0);
+                update_cell_color(resp.play2[0], resp.play2[1], current->color[0], current->color[1], current->color[2]);
+
+                pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, buffer);
             }
 
             break;
@@ -322,8 +325,11 @@ int main(int argc, char *argv[])
 
     srand(time(NULL));
 
+    // dim par
+    // dim < 26 e > 1
+
     // ---- Read dim argument and init board ----
-    if (argc != 2 || sscanf(argv[1], "%d", &dim) == 0)
+    if (argc != 2 || sscanf(argv[1], "%d", &dim) == 0 || dim > 26 || dim < 1)
     {
         printf("Please provide a correct dimension argument.\n");
         exit(1);
