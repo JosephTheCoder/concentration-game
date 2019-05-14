@@ -14,6 +14,17 @@
 
 #define BUFFER_SIZE 128
 
+// void *read_messages(void *buffer) //arg = string com posição jogada
+// {
+//     player_t *cur;
+
+//     while (current->next != NULL)
+//     {
+//         write(current->fd, buffer, strlen(buffer));
+//         current = current->next;
+//     }
+// }
+
 int main(int argc, char *argv[])
 {
     int fd;
@@ -160,9 +171,9 @@ int main(int argc, char *argv[])
                     write_card(resp.play[0], resp.play[1], resp.str_play, 200, 200, 200); //receive text color from server
                 }
             }
+            }
         }
     }
-}
 
 printf("fim\n");
 close_board_windows();
