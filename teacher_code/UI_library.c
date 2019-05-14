@@ -21,8 +21,8 @@ void write_card(int  board_x, int board_y, char * text, int r, int g, int b){
 
 	TTF_Font * font = TTF_OpenFont("arial.ttf", row_height);
 
-	int text_x = board_x * col_width;
-	int text_y = board_y * row_height;
+/* 	int text_x = board_x * col_width;
+	int text_y = board_y * row_height; */
 
 	SDL_Color color = { r, g, b };
  	SDL_Surface * surface = TTF_RenderText_Solid(font, text, color);
@@ -65,7 +65,7 @@ void get_board_card(int mouse_x, int mouse_y, int * board_x, int *board_y){
 }
 
 
-int create_board_window(int width, int height,  int dim){
+void create_board_window(int width, int height,  int dim){
 
 	screen_width = width;
 	screen_height = height;

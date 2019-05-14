@@ -1,7 +1,3 @@
-#
-#* File Name: Makefile
-#* Author:    Gonçalo Lemos / Rodrigo Carnall
-#*
 
 CC=gcc
 CFLAGS= -Wall -g
@@ -35,4 +31,4 @@ clean_client:
 
 server.o: server.c server.h board_library.h
 
-client.o: UI_client.c UI_client.h UI_library.h
+client.o: UI_client.c board_library.h UI_client.h UI_library.h
