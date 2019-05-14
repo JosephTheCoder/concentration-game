@@ -79,6 +79,8 @@ int main(int argc, char *argv[])
     printf("board dimension: %d\n", dim);
     create_board_window(300, 300, dim);
 
+    resp.str_play = (char *)malloc(dim * sizeof(char));
+
     printf("player color: [%d,%d,%d]\n", my_color[0], my_color[1], my_color[2]);
 
     for (int i = 0; i < dim * dim; i++)
@@ -147,6 +149,7 @@ int main(int argc, char *argv[])
                 if (code == 3)
                 {
                     //acabou
+
                 }
                 else if (code == 0)
                 {
@@ -156,7 +159,7 @@ int main(int argc, char *argv[])
                 }
                 else
                 {
-                    sscanf(buffer, "%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d/%d", &code, &resp.play[0], &resp.play[1], resp.str_play[0], resp.str_play[1], resp.str_play[2], &color[0], &color[1], &color[2], &text_color[0], &text_color[1], &text_color[2]);
+                    sscanf(buffer, "%d/%d/%d/%s/%d/%d/%d/%d/%d/%d", &code, &resp.play[0], &resp.play[1], resp.str_play, &color[0], &color[1], &color[2], &text_color[0], &text_color[1], &text_color[2]);
                     paint_card(resp.play[0], resp.play[1], color[0], color[1], color[2]);
                     write_card(resp.play[0], resp.play[1], resp.str_play, 200, 200, 200); //receive text color from server
                 }
