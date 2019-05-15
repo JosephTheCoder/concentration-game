@@ -9,7 +9,7 @@
 #include <netdb.h>
 #include <pthread.h>
 
-#define CONCENTRATION_GAME_PORT 3002
+#define CONCENTRATION_GAME_PORT 3011
 #define BUFFER_SIZE 128
 
 typedef struct player{

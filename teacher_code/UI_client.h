@@ -1,5 +1,5 @@
 
-#define CONCENTRATION_GAME_PORT 3002
+#define CONCENTRATION_GAME_PORT 3011
 
 typedef struct server_response{
   int play[2];

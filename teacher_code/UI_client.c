@@ -33,6 +33,7 @@ void *read_plays() //arg = string com posição jogada
         memset(buffer, 0, BUFFER_SIZE);
         n=read(sock_fd, buffer, BUFFER_SIZE);
         buffer[strlen(buffer)]='\0';
+
         if (n == -1)
         {
             perror("error reading play response");
@@ -124,26 +125,29 @@ int main(int argc, char *argv[])
     printf("player color: [%d,%d,%d]\n", my_color[0], my_color[1], my_color[2]);
 
     // WROOOONG
-    for (int i = 0; i < ((dim * dim)+1); i++)
+    for (int i = 0; i < (dim * dim); i++)
     {
         memset(buffer, 0, BUFFER_SIZE);
         n=read(sock_fd, buffer, BUFFER_SIZE);
         buffer[strlen(buffer)]='\0';
+
         if (n == -1)
         {
             perror("error reading cell state");
             exit(-1);
         }
+
         else if(strcmp(buffer, "board_sent") == 0)
         {
             printf("Received all the board info\n");
             break;
         }
+
         else if(strcmp(buffer, "board_sent") != 0)
         {
             sscanf(buffer, "%s/%d/%d/%d/%d/%d", resp.str_play, &resp.color[0], &resp.color[1], &resp.color[2], &resp.play[0], &resp.play[1]);
-             paint_card(resp.play[0], resp.play[1], resp.color[0], resp.color[1], resp.color[2]);
-             write_card(resp.play[0], resp.play[1], resp.str_play, 200, 200, 200);
+            paint_card(resp.play[0], resp.play[1], resp.color[0], resp.color[1], resp.color[2]);
+            write_card(resp.play[0], resp.play[1], resp.str_play, 200, 200, 200);
             // Player connected when the game is already running
             // UPDATE BOARD -----------------
         }
@@ -181,6 +185,7 @@ int main(int argc, char *argv[])
                     // send play to server
                     memset(buffer, 0, BUFFER_SIZE);
                     sprintf(buffer, "%d/%d", board_x, board_y);
+                    printf("Sending play: %s\n", buffer);
                     write(sock_fd, buffer, sizeof(buffer));
                 }
             }

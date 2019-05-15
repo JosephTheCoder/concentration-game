@@ -26,9 +26,9 @@ void init_board(int dim)
   for (i = 0; i < (dim_board * dim_board); i++)
   {
     board[i].v[0] = '\0';
-    board[i].color[0] = 107;
-    board[i].color[1] = 200;
-    board[i].color[2] = 100;
+    board[i].color[0] = 255;
+    board[i].color[1] = 255;
+    board[i].color[2] = 255;
   }
 
   for (char c1 = 'a'; c1 < ('a' + dim_board); c1++)
@@ -69,7 +69,7 @@ play_response board_play(int x, int y)
   resp.code = 10;
   if (strcmp(get_board_place_str(x, y), "") == 0)
   {
-    printf("FILLED\n");
+    /*  printf("FILLED\n");*/
     resp.code = 0;
   }
   else
@@ -93,7 +93,7 @@ play_response board_play(int x, int y)
       if ((play1[0] == x) && (play1[1] == y))
       {
         resp.code = 0;
-        printf("FILLED\n");
+        /* printf("FILLED\n"); */
       }
       else
       {
