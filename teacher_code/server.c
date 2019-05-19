@@ -250,17 +250,13 @@ void send_state_board(int fd, int dim_board)
 // Change this to insert on the head of the list
 void push_to_list(player_t *head, int *color, int fd)
 {
-    player_t *current = head;
+    player_t *node = malloc(sizeof(player_t));
+    node
+    
     int number = 1;
 
-    while (current->next != NULL)
-    {
-        current = current->next;
-        number++;
-    }
-
     /* now we can add a new variable */
-    current->next = malloc(sizeof(player_t));
+   
 
     current->next->fd = fd;
     current->next->number = number;

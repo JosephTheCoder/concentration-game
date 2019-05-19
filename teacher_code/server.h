@@ -9,7 +9,7 @@
 #include <netdb.h>
 #include <pthread.h>
 
-#define CONCENTRATION_GAME_PORT 3002
+#define CONCENTRATION_GAME_PORT 3020
 #define BUFFER_SIZE 128
 
 typedef struct player{
@@ -43,5 +43,5 @@ void *send_play_to_board(void *);
 void *send_play_to_all(void *);
 void *read_first_play(void *);
 void send_state_board(int, int);
-void push_to_list(player_t *, int *, int);
+void push_to_list(player_t *, int *, int, int);
 int remove_from_list(player_t **, int);

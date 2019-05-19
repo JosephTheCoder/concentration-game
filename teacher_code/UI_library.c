@@ -18,7 +18,6 @@ void write_card(int  board_x, int board_y, char * text, int r, int g, int b){
 	rect.w = col_width+1;
 	rect.h = row_height+1;
 
-
 	TTF_Font * font = TTF_OpenFont("arial.ttf", row_height);
 
 /* 	int text_x = board_x * col_width;
