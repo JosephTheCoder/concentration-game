@@ -30,9 +30,9 @@ void *read_plays() //arg = string com posição jogada
     // Receive response from server
     while(1)
     {
-        memset(buffer, 0, BUFFER_SIZE);
-        n=read(sock_fd, buffer, BUFFER_SIZE);
-        buffer[strlen(buffer)]='\0';
+        memset(buffer, 0,sizeof(buffer));
+        n=read(sock_fd, buffer, sizeof(buffer));
+        buffer[sizeof(buffer)]='\0';
         if (n == -1)
         {
             perror("error reading play response");
@@ -40,6 +40,7 @@ void *read_plays() //arg = string com posição jogada
         }
 
         sscanf(buffer, "%d", &code);
+        printf("buffer recebido no read plays: %s\n",buffer);
 
         if (code == 3)
         {
@@ -71,6 +72,7 @@ int main(int argc, char *argv[])
     int done = 0, n=0;
     dim = 0;
 
+ 
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
@@ -107,8 +109,8 @@ int main(int argc, char *argv[])
     }
 
     /* Read board dimension and color info */
-    n=read(sock_fd, buffer, BUFFER_SIZE);
-    buffer[strlen(buffer)]='\0';
+    n=read(sock_fd, buffer, sizeof(buffer));
+    buffer[sizeof(buffer)]='\0';
 
     if (n == -1)
     {
@@ -126,9 +128,9 @@ int main(int argc, char *argv[])
     // WROOOONG
     for (int i = 0; i < ((dim * dim)+1); i++)
     {
-        memset(buffer, 0, BUFFER_SIZE);
-        n=read(sock_fd, buffer, BUFFER_SIZE);
-        buffer[strlen(buffer)]='\0';
+        memset(buffer, 0, sizeof(buffer));
+        n=read(sock_fd, buffer, sizeof(buffer));
+        buffer[sizeof(buffer)]='\0';
         if (n == -1)
         {
             perror("error reading cell state");
@@ -141,7 +143,7 @@ int main(int argc, char *argv[])
         }
         else if(strcmp(buffer, "board_sent") != 0)
         {
-            sscanf(buffer, "%s/%d/%d/%d/%d/%d", resp.str_play, &resp.color[0], &resp.color[1], &resp.color[2], &resp.play[0], &resp.play[1]);
+             sscanf(buffer, "%s/%d/%d/%d/%d/%d", resp.str_play, &resp.color[0], &resp.color[1], &resp.color[2], &resp.play[0], &resp.play[1]);
              paint_card(resp.play[0], resp.play[1], resp.color[0], resp.color[1], resp.color[2]);
              write_card(resp.play[0], resp.play[1], resp.str_play, 200, 200, 200);
             // Player connected when the game is already running
@@ -163,7 +165,7 @@ int main(int argc, char *argv[])
                 case SDL_QUIT:
                 {
                     // send message to server saying we're about to quit
-                    memset(buffer, 0, BUFFER_SIZE);
+                    memset(buffer, 0, sizeof(buffer));
                     strcpy(buffer, "exiting");
                     write(sock_fd, buffer, sizeof(buffer));
                     done = SDL_TRUE;
@@ -179,8 +181,10 @@ int main(int argc, char *argv[])
                     printf("click (%d %d) -> (%d %d)\n", event.button.x, event.button.y, board_x, board_y);
 
                     // send play to server
-                    memset(buffer, 0, BUFFER_SIZE);
+                    memset(buffer, 0, sizeof(buffer));
                     sprintf(buffer, "%d/%d", board_x, board_y);
+                    printf("buffer_client: %s\n",buffer);
+                     
                     write(sock_fd, buffer, sizeof(buffer));
                 }
             }
