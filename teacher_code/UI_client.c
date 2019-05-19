@@ -22,21 +22,23 @@ int dim=0, n=0;
 void *read_plays() //arg = string com posição jogada
 {   
     int code=0;
-    char buffer[128]={'\0'};
+    char buffer[BUFFER_SIZE]={'\0'};
 
     int play_x, play_y;
     char str_play[3];
     int text_color[3];
     int color[3];
 
+    int n;
+
     // Receive response from server
     while(1)
     {
+        n = 0;
         memset(buffer, 0, BUFFER_SIZE);
         n=read(sock_fd, buffer, BUFFER_SIZE);
-        //buffer[sizeof(buffer)]='\0';
 
-        printf("Received play response: %s\n", buffer);
+        printf("Received play response with %d bytes: %s\n", n, buffer);
         
         if (n == -1)
         {
@@ -134,7 +136,7 @@ int main(int argc, char *argv[])
     printf("player color: [%d,%d,%d]\n", my_color[0], my_color[1], my_color[2]);
 
     // Read board info
-    for (int i = 0; i < (dim * dim); i++)
+    while(strcmp(buffer, "board_sent") != 0)
     {
         memset(buffer, 0, BUFFER_SIZE);
         n=read(sock_fd, buffer, sizeof(buffer));
@@ -148,27 +150,17 @@ int main(int argc, char *argv[])
 
         else if(strcmp(buffer, "board_sent") != 0)
         {
-            printf("Received buffer: %s\n", buffer);
+            //printf("Received buffer: %s\n", buffer);
 
-            printf("strlen: %d\n", strlen(buffer));
-
+            //Tem que receber a cor do texto para saber se escreve ou não ------------------------------
             sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play_x, &play_y);
-
-            printf("painting: %s\n", buffer);
-            printf("str: %s resp.play[0]: %d resp.play[1]: %d\n", str_play, play_x, play_y);
 
             paint_card(play_x, play_y, color[0], color[1], color[2]);
             write_card(play_x, play_y, str_play, 200, 200, 200);
-            break;
-        }
-
-        else if(strcmp(buffer, "board_sent") == 0)
-        {
-            printf("Received all the board info\n");
-    
-            break;
         }
     }
+
+    printf("Received all the board info\n");
 
     /* Start game (copy from memory-single) */
     pthread_create(&thread_ID_read_plays, NULL, read_plays, NULL);
@@ -195,11 +187,9 @@ int main(int argc, char *argv[])
                     int board_x, board_y;
                     get_board_card(event.button.x, event.button.y, &board_x, &board_y);
 
-                    printf("click (%d %d) -> (%d %d)\n", event.button.x, event.button.y, board_x, board_y);
-
                     // send play to server
                     memset(buffer, 0, BUFFER_SIZE);
-                    sprintf(buffer, "%d/%d", board_x, board_y);
+                    sprintf(buffer, "%d %d", board_x, board_y);
                     printf("Sending play: %s\n", buffer);
                     write(sock_fd, buffer, sizeof(buffer));
                 }

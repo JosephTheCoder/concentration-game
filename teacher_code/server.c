@@ -48,6 +48,26 @@ int *random_color()
 
 /**************************************************************************************************/
 
+int write_payload(char *payload, int fd)
+{
+    int written = 0;
+    int n;
+
+    while (written < strlen(payload))
+    {
+        if ((n = write(fd, payload + written, strlen(payload) - written)) < 0)
+        {
+            return -1;
+        }
+
+        written += n;
+    }
+
+    return written;
+}
+
+/**************************************************************************************************/
+
 void *read_second_play(void *sock_fd)
 {
     int fd = *((int *)sock_fd);
@@ -67,6 +87,7 @@ void *read_second_play(void *sock_fd)
 
         sscanf(buffer, "%d %d", &x, &y);
         printf("Buffer 2nd play: %s\n", buffer);
+
         resp = board_play(x, y);
     }
 
@@ -78,13 +99,16 @@ void *read_second_play(void *sock_fd)
 void *send_play_to_all(void *buffer) //arg = string com posição jogada
 {
     player_t *current = players_list_head;
-    char *arr = (char *)buffer;
+    char *payload = (char *)buffer;
+    int n;
 
-    while (current->next != NULL)
+    while (current != NULL)
     {
-        write(current->fd, arr, strlen(arr));
+        n = write_payload(payload, current->fd);
+        printf("Sent payload with %d bytes to player %d: %s\n", n, current->number, payload);
         current = current->next;
     }
+
     pthread_exit(NULL);
 }
 
@@ -244,6 +268,8 @@ void send_state_board(int fd, int dim_board)
         sprintf(str, "%d", translate_i_to_y(i, dim_board));
         strcat(buffer, str);
 
+        // Falta enviar info se é para escrever as letras ou não--------------------
+
         printf("Sending cell: %s\n", buffer);
 
         write(fd, buffer, sizeof(buffer));
@@ -255,22 +281,18 @@ void send_state_board(int fd, int dim_board)
 }
 
 // Change this to insert on the head of the list
-void push_to_list(player_t *head, int *color, int fd)
+void push_to_list(player_t *head, int *color, int fd, int player_number)
 {
     player_t *current = head;
-    int number = 1;
 
     while (current->next != NULL)
-    {
         current = current->next;
-        number++;
-    }
 
     /* now we can add a new variable */
-    current->next = malloc(sizeof(player_t));
+    current->next = (player_t *)malloc(sizeof(player_t));
 
     current->next->fd = fd;
-    current->next->number = number;
+    current->next->number = player_number;
 
     current->next->color[0] = color[0];
     current->next->color[1] = color[1];
@@ -345,9 +367,10 @@ int main(int argc, char *argv[])
     init_board(dim);
 
     lock = (pthread_mutex_t **)malloc(dim * sizeof(pthread_mutex_t *));
+
     for (i = 0; i < dim; i++)
     {
-        lock[i] = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+        lock[i] = (pthread_mutex_t *)malloc(dim * sizeof(pthread_mutex_t));
     }
 
     // ---- Setup TCP server ----
@@ -395,7 +418,7 @@ int main(int argc, char *argv[])
 
         if (nr_players == 1) // in the case of the 1st player we also have to allocate the list!
         {
-            players_list_head = malloc(sizeof(player_t));
+            players_list_head = (player_t *)malloc(sizeof(player_t));
             if (players_list_head == NULL)
                 exit(1);
 
@@ -409,11 +432,11 @@ int main(int argc, char *argv[])
 
         else // 2nd player case -> push to existing list
         {
-            push_to_list(players_list_head, color, new_fd);
+            push_to_list(players_list_head, color, new_fd, nr_players);
         }
 
         memset(buffer, 0, BUFFER_SIZE); //erase buffer before inserting data
-        sprintf(buffer, "%d/%d/%d/%d", dim, color[0], color[1], color[2]);
+        sprintf(buffer, "%d %d %d %d", dim, color[0], color[1], color[2]);
         write(new_fd, buffer, sizeof(buffer));
 
         // only start the game when there is more than 1 player

@@ -69,7 +69,7 @@ play_response board_play(int x, int y)
   resp.code = 10;
   if (strcmp(get_board_place_str(x, y), "") == 0)
   {
-    /*  printf("FILLED\n");*/
+    printf("FILLED\n");
     resp.code = 0;
   }
   else
@@ -93,7 +93,7 @@ play_response board_play(int x, int y)
       if ((play1[0] == x) && (play1[1] == y))
       {
         resp.code = 0;
-        /* printf("FILLED\n"); */
+        printf("FILLED\n");
       }
       else
       {
