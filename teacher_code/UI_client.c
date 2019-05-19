@@ -16,24 +16,28 @@
 
 #define BUFFER_SIZE 128
 
-server_response resp;
-
 int sock_fd=0;
 int dim=0, n=0;
 
 void *read_plays() //arg = string com posição jogada
 {   
-    int text_color[3];
-    int color[3];
     int code=0;
     char buffer[128]={'\0'};
+
+    int play_x, play_y;
+    char str_play[3];
+    int text_color[3];
+    int color[3];
+
     // Receive response from server
     while(1)
     {
         memset(buffer, 0, BUFFER_SIZE);
         n=read(sock_fd, buffer, BUFFER_SIZE);
-        buffer[strlen(buffer)]='\0';
+        //buffer[sizeof(buffer)]='\0';
 
+        printf("Received play response: %s\n", buffer);
+        
         if (n == -1)
         {
             perror("error reading play response");
@@ -48,14 +52,14 @@ void *read_plays() //arg = string com posição jogada
         }
         else if (code == 0)
         {
-            sscanf(buffer, "0/%d/%d", &resp.play[0], &resp.play[1]);
-            paint_card(resp.play[0], resp.play[1], 255, 255, 255);
+            sscanf(buffer, "0 %d %d", &play_x, &play_y);
+            paint_card(play_x, play_y, 255, 255, 255);
         }
         else
         {
-            sscanf(buffer, "%d/%d/%d/%s/%d/%d/%d/%d/%d/%d", &code, &resp.play[0], &resp.play[1], resp.str_play, &color[0], &color[1], &color[2], &text_color[0], &text_color[1], &text_color[2]);
-            paint_card(resp.play[0], resp.play[1], color[0], color[1], color[2]);
-            write_card(resp.play[0], resp.play[1], resp.str_play, 200, 200, 200); //receive text color from server
+            sscanf(buffer, "%d %d %d %s %d %d %d %d %d %d", &code, &play_x, &play_y, str_play, &color[0], &color[1], &color[2], &text_color[0], &text_color[1], &text_color[2]);
+            paint_card(play_x, play_y, color[0], color[1], color[2]);
+            write_card(play_x, play_y, str_play, 200, 200, 200); //receive text color from server
         }
     }
     pthread_exit(NULL);
@@ -71,6 +75,11 @@ int main(int argc, char *argv[])
     SDL_Event event;
     int done = 0, n=0;
     dim = 0;
+
+    int play_x, play_y;
+    char str_play[3];
+    int text_color[3];
+    int color[3];
 
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
@@ -109,7 +118,7 @@ int main(int argc, char *argv[])
 
     /* Read board dimension and color info */
     n=read(sock_fd, buffer, BUFFER_SIZE);
-    buffer[strlen(buffer)]='\0';
+    buffer[sizeof(buffer)]='\0';
 
     if (n == -1)
     {
@@ -117,19 +126,19 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    sscanf(buffer, "%d/%d/%d/%d", &dim, &my_color[0], &my_color[1], &my_color[2]);
+    sscanf(buffer, "%d %d %d %d", &dim, &my_color[0], &my_color[1], &my_color[2]);
 
     printf("board dimension: %d\n", dim);
     create_board_window(300, 300, dim);
 
     printf("player color: [%d,%d,%d]\n", my_color[0], my_color[1], my_color[2]);
 
-    // WROOOONG
+    // Read board info
     for (int i = 0; i < (dim * dim); i++)
     {
         memset(buffer, 0, BUFFER_SIZE);
-        n=read(sock_fd, buffer, BUFFER_SIZE);
-        buffer[strlen(buffer)]='\0';
+        n=read(sock_fd, buffer, sizeof(buffer));
+        //buffer[sizeof(buffer)]='\0';
 
         if (n == -1)
         {
@@ -137,22 +146,28 @@ int main(int argc, char *argv[])
             exit(-1);
         }
 
-        else if(strcmp(buffer, "board_sent") == 0)
+        else if(strcmp(buffer, "board_sent") != 0)
         {
-            printf("Received all the board info\n");
+            printf("Received buffer: %s\n", buffer);
+
+            printf("strlen: %d\n", strlen(buffer));
+
+            sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play_x, &play_y);
+
+            printf("painting: %s\n", buffer);
+            printf("str: %s resp.play[0]: %d resp.play[1]: %d\n", str_play, play_x, play_y);
+
+            paint_card(play_x, play_y, color[0], color[1], color[2]);
+            write_card(play_x, play_y, str_play, 200, 200, 200);
             break;
         }
 
-        else if(strcmp(buffer, "board_sent") != 0)
+        else if(strcmp(buffer, "board_sent") == 0)
         {
-            sscanf(buffer, "%s/%d/%d/%d/%d/%d", resp.str_play, &resp.color[0], &resp.color[1], &resp.color[2], &resp.play[0], &resp.play[1]);
-            paint_card(resp.play[0], resp.play[1], resp.color[0], resp.color[1], resp.color[2]);
-            write_card(resp.play[0], resp.play[1], resp.str_play, 200, 200, 200);
-            // Player connected when the game is already running
-            // UPDATE BOARD -----------------
+            printf("Received all the board info\n");
+    
+            break;
         }
-
-        printf("%s\n", buffer);
     }
 
     /* Start game (copy from memory-single) */
