@@ -154,7 +154,7 @@ void *read_first_play(void *sock_fd)
             /* chose filled position - Does nothing */
             memset(buffer, 0, BUFFER_SIZE); //erase buffer before inserting data
             sprintf(buffer, "%d", resp.code);
-            write(fd, buffer, sizeof(buffer));
+            write_payload(buffer, fd);
             break;
         case 1:
             /* first play */
@@ -277,7 +277,7 @@ void send_state_board(int fd, int dim_board)
 
     memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "%s", "board_sent");
-    write(fd, buffer, sizeof(buffer));
+    write_payload(buffer, fd);
 }
 
 // Change this to insert on the head of the list
@@ -437,7 +437,7 @@ int main(int argc, char *argv[])
 
         memset(buffer, 0, BUFFER_SIZE); //erase buffer before inserting data
         sprintf(buffer, "%d %d %d %d", dim, color[0], color[1], color[2]);
-        write(new_fd, buffer, sizeof(buffer));
+        write_payload(buffer, new_fd);
 
         // only start the game when there is more than 1 player
         if (nr_players == 2)

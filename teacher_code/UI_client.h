@@ -4,4 +4,5 @@
 board_place *board_client;
 
 
-void *read_plays();
+void read_plays();
+void read_board();
