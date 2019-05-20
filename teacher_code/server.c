@@ -6,6 +6,7 @@
 #include <time.h>
 
 pthread_mutex_t **lock;
+play_response resp[100];
 player_t *players_list_head = NULL;
 
 /**************************************************************************************************/
@@ -48,27 +49,50 @@ int *random_color()
 
 /**************************************************************************************************/
 
+int write_payload(char *payload, int fd)
+{
+    int written = 0;
+    int n;
+
+    while (written < strlen(payload))
+    {
+        if ((n = write(fd, payload + written, strlen(payload) - written)) < 0)
+        {
+            return -1;
+        }
+
+        written += n;
+    }
+
+    return written;
+}
+
+/**************************************************************************************************/
+
 void *read_second_play(void *sock_fd)
 {
     int fd = *((int *)sock_fd);
     int x = 0, y = 0;
     char buffer[128] = {'\0'};
-    play_response resp;
+   
 
-    while (1)
-    {
-      
+        memset(buffer, 0, BUFFER_SIZE);
+
         //add timer
         //if timer ends -> pthread_exit(flag) = -1 (tempo acabou)
-        memset(buffer, 0, sizeof(buffer));
+
         read(fd, buffer, sizeof(buffer));
-        buffer[sizeof(buffer)] = '\0';
+        //buffer[strlen(buffer)] = '\0';
 
-        sscanf(buffer, "%d/%d", &x, &y);
-        resp = board_play(x, y);
-    }
+        sscanf(buffer, "%d %d", &x, &y);
+        printf("Buffer 2nd play: %s\n", buffer);
 
-    pthread_exit(&resp.code);
+        resp[fd] = board_play(x, y);
+    
+    printf("code play 2: %d\n", resp[fd].code);
+    //pthread_exit((void*)&resp);
+     pthread_exit(NULL);
+     
 }
 
 /***********************************************************************************************************/
@@ -76,13 +100,17 @@ void *read_second_play(void *sock_fd)
 void *send_play_to_all(void *buffer) //arg = string com posição jogada
 {
     player_t *current = players_list_head;
-    char *arr = (char *)buffer;
+    char *payload = (char *)buffer;
     
-    while(current->next != NULL)
+    int n;
+
+    while (current != NULL)
     {
-        write(current->fd, arr, sizeof(arr));
+        n = write_payload(payload, current->fd);
+        printf("Sent payload with %d bytes to player %d: %s\n", n, current->number, payload);
         current = current->next;
     }
+
     pthread_exit(NULL);
 }
 
@@ -90,7 +118,7 @@ void *send_play_to_all(void *buffer) //arg = string com posição jogada
 void *read_first_play(void *sock_fd)
 {
     // inserir mutexes nesta thread para evitar que dois clientes carreguem na mesma caixa na board
-    
+
     int fd = *((int *)sock_fd);
     printf("fd: %d\n", fd);
 
@@ -98,35 +126,44 @@ void *read_first_play(void *sock_fd)
     char buffer[128] = {'\0'};
     player_t *current = players_list_head;
     pthread_t thread_ID_secondPlay, thread_ID_sendPlays;
-    play_response resp;
-
+  
+    void * ret;
     current = find_fd_list(fd);
 
     while (1)
     {
-        memset(buffer, 0, sizeof(buffer));
-        read(fd, buffer,sizeof(buffer));
-        buffer[sizeof(buffer)] = '\0';
-        printf("BUFFER: %s\n", buffer);
-        sscanf(buffer, "%d/%d", &x, &y);
+        memset(buffer, 0, BUFFER_SIZE);
+        read(fd, buffer, sizeof(buffer));
+        //buffer[sizeof(buffer)] = '\0';
+
+        if (strcmp(buffer, "exiting") == 0)
+        {
+            //remove player from the list
+            printf("Player %d exited!", current->number);
+            break;
+        }
+
+        sscanf(buffer, "%d %d", &x, &y);
+
+        printf("Buffer 1st play: %s\n", buffer);
 
         pthread_mutex_lock(&lock[x][y]);
-        resp = board_play(x, y);
+        resp[fd] = board_play(x, y);
 
-        switch (resp.code)
+        switch (resp[fd].code)
         {
         case 0:
             /* chose filled position - Does nothing */
-            memset(buffer, 0, sizeof(buffer)); //erase buffer before inserting data
-            sprintf(buffer, "%d", resp.code);
-            write(fd, buffer, sizeof(buffer));
+            memset(buffer, 0, BUFFER_SIZE); //erase buffer before inserting data
+            sprintf(buffer, "%d", resp[fd].code);
+            write_payload(buffer, fd);
             break;
         case 1:
             /* first play */
-            memset(buffer, 0, sizeof(buffer));
-            sprintf(buffer, "%d/%d/%d/%s/%d/%d/%d/%d/%d/%d", resp.code, resp.play1[0], resp.play1[1], resp.str_play1, current->color[0], current->color[1], current->color[2], 200, 200, 200);
+            memset(buffer, 0, BUFFER_SIZE);
+            sprintf(buffer, "%d %d %d %s %d %d %d %d %d %d", resp[fd].code, resp[fd].play1[0], resp[fd].play1[1], resp[fd].str_play1, current->color[0], current->color[1], current->color[2], 200, 200, 200);
 
-            update_cell_color(resp.play1[0], resp.play1[1], current->color[0], current->color[1], current->color[2]);
+            update_cell_color(resp[fd].play1[0],resp[fd].play1[1], current->color[0], current->color[1], current->color[2]);
 
             // construção buffer
             pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
@@ -135,16 +172,19 @@ void *read_first_play(void *sock_fd)
             pthread_create(&thread_ID_secondPlay, NULL, read_second_play, (void *)&fd);
 
             //pthread join, receives code as return
-            pthread_join(thread_ID_secondPlay, (void*)&code);
+            pthread_join(thread_ID_secondPlay, NULL);
+            
 
-            switch (code)
+            //printf("code play 2: %d\n", code);
+            printf("code play 2_first thread: %d\n", resp[fd].code);
+            switch (resp[fd].code)
             {
             case 0:
                 /* chose filled position - Does nothing */
                 // construção buffer a dizer "nononono", virar 1a carta para baixo
-                memset(buffer, 0, sizeof(buffer));
-                sprintf(buffer, "0/%d/%d/%d/%d/%d", resp.play1[0], resp.play1[1], 255, 255, 255);
-                update_cell_color(resp.play1[0], resp.play1[1], 107, 200, 100);
+                memset(buffer, 0, BUFFER_SIZE);
+                sprintf(buffer, "0 %d %d %d %d %d", resp[fd].play1[0], resp[fd].play1[1], 255, 255, 255);
+                update_cell_color(resp[fd].play1[0], resp[fd].play1[1], 107, 200, 100);
 
                 pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
                 break;
@@ -153,45 +193,44 @@ void *read_first_play(void *sock_fd)
                 pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
 
             case -2:
+                
                 // buffer a virar a carta para cima
                 //REVER CORES DO TEXTO E DA CELULA
-                memset(buffer, 0, sizeof(buffer));
-                sprintf(buffer, "%d/%d/%d/%s/%d/%d/%d/%d/%d/%d", resp.code, resp.play2[0], resp.play2[1], resp.str_play2, current->color[0], current->color[1], current->color[2], 200, 200, 200);
-                update_cell_color(resp.play2[0], resp.play2[1], current->color[0], current->color[1], current->color[2]);
-
+                memset(buffer, 0, BUFFER_SIZE);
+                sprintf(buffer, "%d %d %d %s %d %d %d %d %d %d", resp[fd].code, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color[0], current->color[1], current->color[2], 200, 200, 200);
+                printf("antes de update\n");
+                update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2]);
                 pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
                 pthread_join(thread_ID_sendPlays, NULL);
                 sleep(2);
 
                 // buffer a virar as cartas para baixo
-                memset(buffer, 0, sizeof(buffer));
+                memset(buffer, 0, BUFFER_SIZE);
 
-                sprintf(buffer, "%d/%d/%d/%s/%d/%d/%d/%d/%d/%d", resp.code, resp.play1[0], resp.play1[1], resp.str_play1, 255, 255, 255, 255, 255, 255);
-                update_cell_color(resp.play1[0], resp.play1[1], 107, 200, 100);
+                sprintf(buffer, "%d %d %d %s %d %d %d %d %d %d", resp[fd].code, resp[fd].play1[0], resp[fd].play1[1], resp[fd].str_play1, 255, 255, 255, 255, 255, 255);
+                update_cell_color(resp[fd].play1[0], resp[fd].play1[1], 107, 200, 100);
 
                 pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
 
                 // buffer a virar as cartas para baixo
-                memset(buffer, 0, sizeof(buffer));
-                sprintf(buffer, "%d/%d/%d/%s/%d/%d/%d/%d/%d/%d", resp.code, resp.play2[0], resp.play2[1], resp.str_play2, 255, 255, 255, 255, 255, 255);
-                update_cell_color(resp.play2[0], resp.play2[1], 107, 200, 100);
+                memset(buffer, 0, BUFFER_SIZE);
+                sprintf(buffer, "%d %d %d %s %d %d %d %d %d %d", resp[fd].code, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, 255, 255, 255, 255, 255, 255);
+                update_cell_color(resp[fd].play2[0], resp[fd].play2[1], 107, 200, 100);
 
                 pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
 
             case 3:
                 //envia a todos a info para virar a carta e que o jogador x ganhou
-                memset(buffer, 0, sizeof(buffer));
-                sprintf(buffer, "%d/%d/%d/%d/%s/%d/%d/%d/%d/%d/%d", resp.code, current->number, resp.play2[0], resp.play2[1], resp.str_play2, 255, 255, 255, 255, 0, 0);
-                update_cell_color(resp.play2[0], resp.play2[1], current->color[0], current->color[1], current->color[2]);
+                memset(buffer, 0, BUFFER_SIZE);
+                sprintf(buffer, "%d %d %d %d %s %d %d %d %d %d %d", resp[fd].code, current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, 255, 255, 255, 255, 0, 0);
+                update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2]);
 
                 pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
             }
-
             break;
         }
     }
     pthread_exit(NULL);
-
 }
 
 int translate_i_to_x(int i, int dim_board)
@@ -214,52 +253,52 @@ void send_state_board(int fd, int dim_board)
 
     for (i = 0; i < dim * dim; i++)
     {
-       /* if (board[i].color[0] != 107 && board[1].color[2] != 200 && board[3].color[3] != 100)
-        {*/
-            memset(buffer, 0, sizeof(buffer));
+        memset(buffer, 0, BUFFER_SIZE);
 
-            strcpy(buffer, board[i].v);
-            strcat(buffer, "/");
-            sprintf(color, "%d", board[i].color[0]);
-            strcat(buffer, color);
-            strcat(buffer, "/");
-            sprintf(color, "%d", board[i].color[1]);
-            strcat(buffer, color);
-            strcat(buffer, "/");
-            sprintf(color, "%d", board[i].color[2]);
-            strcat(buffer, color);
-            strcat(buffer, "/");
+        strcpy(buffer, board[i].v);
+        strcat(buffer, " ");
+        sprintf(color, "%d", board[i].color[0]);
+        strcat(buffer, color);
+        strcat(buffer, " ");
+        sprintf(color, "%d", board[i].color[1]);
+        strcat(buffer, color);
+        strcat(buffer, " ");
+        sprintf(color, "%d", board[i].color[2]);
+        strcat(buffer, color);
+        strcat(buffer, " ");
 
-            // coordenadas x e y da celula da board
-            sprintf(str, "%d", translate_i_to_x(i, dim_board));
-            strcat(buffer, str);
-            strcat(buffer, "/");
-            sprintf(str, "%d", translate_i_to_y(i, dim_board));
-            strcat(buffer, str);
-            
-            write(fd, buffer, sizeof(buffer));
-            //}
+        // coordenadas x e y da celula da board
+        sprintf(str, "%d", translate_i_to_x(i, dim_board));
+        strcat(buffer, str);
+        strcat(buffer, " ");
+        sprintf(str, "%d", translate_i_to_y(i, dim_board));
+        strcat(buffer, str);
+
+        // Falta enviar info se é para escrever as letras ou não--------------------
+
+        printf("Sending cell: %s\n", buffer);
+
+        write(fd, buffer, sizeof(buffer));
     }
 
-    memset(buffer, 0, sizeof(buffer));
+    memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "%s", "board_sent");
-    write(fd, buffer, sizeof(buffer));
-
+    write_payload(buffer, fd);
 }
 
 // Change this to insert on the head of the list
-void push_to_list(player_t *head, int *color, int fd)
+void push_to_list(player_t *head, int *color, int fd, int player_number)
 {
-    player_t *node = malloc(sizeof(player_t));
-    node
-    
-    int number = 1;
+    player_t *current = head;
+
+    while (current->next != NULL)
+        current = current->next;
 
     /* now we can add a new variable */
-   
+    current->next = (player_t *)malloc(sizeof(player_t));
 
     current->next->fd = fd;
-    current->next->number = number;
+    current->next->number = player_number;
 
     current->next->color[0] = color[0];
     current->next->color[1] = color[1];
@@ -334,9 +373,10 @@ int main(int argc, char *argv[])
     init_board(dim);
 
     lock = (pthread_mutex_t **)malloc(dim * sizeof(pthread_mutex_t *));
+
     for (i = 0; i < dim; i++)
     {
-        lock[i] = (pthread_mutex_t *)malloc(sizeof(pthread_mutex_t));
+        lock[i] = (pthread_mutex_t *)malloc(dim * sizeof(pthread_mutex_t));
     }
 
     // ---- Setup TCP server ----
@@ -384,7 +424,7 @@ int main(int argc, char *argv[])
 
         if (nr_players == 1) // in the case of the 1st player we also have to allocate the list!
         {
-            players_list_head = malloc(sizeof(player_t));
+            players_list_head = (player_t *)malloc(sizeof(player_t));
             if (players_list_head == NULL)
                 exit(1);
 
@@ -398,12 +438,12 @@ int main(int argc, char *argv[])
 
         else // 2nd player case -> push to existing list
         {
-            push_to_list(players_list_head, color, new_fd);
+            push_to_list(players_list_head, color, new_fd, nr_players);
         }
 
-        memset(buffer, 0, sizeof(buffer)); //erase buffer before inserting data
-        sprintf(buffer, "%d/%d/%d/%d", dim,color[0], color[1], color[2]);
-        write(new_fd, buffer, sizeof(buffer));
+        memset(buffer, 0, BUFFER_SIZE); //erase buffer before inserting data
+        sprintf(buffer, "%d %d %d %d", dim, color[0], color[1], color[2]);
+        write_payload(buffer, new_fd);
 
         // only start the game when there is more than 1 player
         if (nr_players == 2)
@@ -422,7 +462,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        pthread_create(&thread_ID, NULL, read_first_play, (void*)&new_fd);
+        pthread_create(&thread_ID, NULL, read_first_play, (void *)&new_fd);
     }
 
     pthread_mutex_destroy(*lock);
