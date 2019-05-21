@@ -12,7 +12,7 @@
 #include "board_library.h"
 #include "UI_library.h"
 #include "server.h"
-#include "UI_client.h"
+#include "UI_bot.h"
 
 #define BUFFER_SIZE 128
 
@@ -47,8 +47,6 @@ void read_plays()
     int text_color[3];
     int color[3];
 
-    int winner;
-
     int n;
 
     // Receive response from server
@@ -67,33 +65,25 @@ void read_plays()
         }
 
         sscanf(buffer, "%d", &code);
-        printf("buffer recebido no read plays: %s\n",buffer);
+        printf("buffer recebido no read plays: %s\n", buffer);
 
         if (code == 3)
         {
-            sscanf(buffer, "3 %d %d %s %d %d %d", &winner, &play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
-            paint_card(play_x, play_y, color[0], color[1], color[2]);
-            write_card(play_x, play_y, str_play, 200, 200, 200); //receive text color from server
-            
-            printf("The winner is the Player %d!\n", winner);
-            break;
+            //acabou
         }
-
-        // turn card down
-        else if (code == -1)
+        else if (code == 0)
         {
-            sscanf(buffer, "-1 %d %d", &play_x, &play_y);
+            sscanf(buffer, "0 %d %d", &play_x, &play_y);
             paint_card(play_x, play_y, 255, 255, 255);
         }
-
-        // turn card up
         else
         {
-            sprintf(buffer, "1 %d %d %s %d %d %d",&play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
+            sscanf(buffer, "%d %d %d %s %d %d %d %d %d %d", &code, &play_x, &play_y, str_play, &color[0], &color[1], &color[2], &text_color[0], &text_color[1], &text_color[2]);
 
             printf("Paint cell %d %d with the color %d %d %d\n", play_x, play_y, color[0], color[1], color[2]);
 
             paint_card(play_x, play_y, color[0], color[1], color[2]);
+
             write_card(play_x, play_y, str_play, 200, 200, 200); //receive text color from server
         }
     }
@@ -150,20 +140,26 @@ void *read_sdl_events()
                 done = SDL_TRUE;
                 break;
             }
-
-            case SDL_MOUSEBUTTONDOWN:
-            {
-                int board_x, board_y;
-                get_board_card(event.button.x, event.button.y, &board_x, &board_y);
-
-                // send play to server
-                memset(buffer, 0, BUFFER_SIZE);
-                sprintf(buffer, "%d %d", board_x, board_y);
-                printf("Sending play: %s\n", buffer);
-                write_payload(buffer, sock_fd);
-            }
             }
         }
+    }
+    pthread_exit(NULL);
+}
+
+void *generate_plays(void *arg)
+{
+    int dim = *((int *)arg);
+    int board_x, board_y;
+
+    while (1)
+    {
+        board_x = rand() % dim;
+        board_y = rand() % dim;
+
+        memset(buffer, 0, BUFFER_SIZE);
+        sprintf(buffer, "%d %d", board_x, board_y);
+        printf("Sending play: %s\n", buffer);
+        write_payload(buffer, sock_fd);
     }
     pthread_exit(NULL);
 }
@@ -175,6 +171,8 @@ int main(int argc, char *argv[])
     int my_color[3];
 
     pthread_t thread_ID_read_sdl_events;
+    pthread_t thread_ID_generate_plays;
+
     int n = 0;
     dim = 0;
 
@@ -183,6 +181,7 @@ int main(int argc, char *argv[])
         printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         exit(-1);
     }
+
     if (TTF_Init() == -1)
     {
         printf("TTF_Init: %s\n", TTF_GetError());
@@ -234,7 +233,9 @@ int main(int argc, char *argv[])
     printf("Received all the board info\n");
 
     /* Start game (copy from memory-single) */
-    pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL);
+    pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL); // change this cause function only reads SDL_QUIT
+
+    pthread_create(&thread_ID_generate_plays, NULL, generate_plays, NULL);
 
     read_plays();
 
