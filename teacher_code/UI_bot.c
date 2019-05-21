@@ -12,7 +12,7 @@
 #include "board_library.h"
 #include "UI_library.h"
 #include "server.h"
-#include "UI_client.h"
+#include "UI_bot.h"
 
 #define BUFFER_SIZE 128
 
@@ -146,16 +146,22 @@ void *read_sdl_events()
     pthread_exit(NULL);
 }
 
-void *generate_plays()
+void *generate_plays(void *arg)
 {
+    int dim = *((int *)arg);
     int board_x, board_y;
-    // get_board_card(event.button.x, event.button.y, &board_x, &board_y);
 
-    // send play to server
-    memset(buffer, 0, BUFFER_SIZE);
-    sprintf(buffer, "%d %d", board_x, board_y);
-    printf("Sending play: %s\n", buffer);
-    write_payload(buffer, sock_fd);
+    while (1)
+    {
+        board_x = rand() % dim;
+        board_y = rand() % dim;
+
+        memset(buffer, 0, BUFFER_SIZE);
+        sprintf(buffer, "%d %d", board_x, board_y);
+        printf("Sending play: %s\n", buffer);
+        write_payload(buffer, sock_fd);
+    }
+    pthread_exit(NULL);
 }
 
 int main(int argc, char *argv[])
@@ -175,6 +181,7 @@ int main(int argc, char *argv[])
         printf("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
         exit(-1);
     }
+
     if (TTF_Init() == -1)
     {
         printf("TTF_Init: %s\n", TTF_GetError());
@@ -230,7 +237,7 @@ int main(int argc, char *argv[])
 
     pthread_create(&thread_ID_generate_plays, NULL, generate_plays, NULL);
 
-    read_plays(); 
+    read_plays();
 
     printf("fim\n");
     close_board_windows();
