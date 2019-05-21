@@ -87,7 +87,7 @@ void *read_second_play(void *sock_fd)
         printf("Buffer 2nd play: %s\n", buffer);
         pthread_mutex_lock(&lock[x][y]);
         resp[fd] = board_play(x, y);
-        pthread_mutex_unlock(&lock[x][y]);
+       
     printf("code play 2: %d\n", resp[fd].code);
     //pthread_exit((void*)&resp);
     pthread_exit(NULL);
@@ -123,6 +123,8 @@ void broadcast_up(int x, int y, char *str, int *color)
 
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
+    pthread_join(thread_ID_sendPlays, NULL);
+
 }
 
 /***********************************************************************************************************/
@@ -136,6 +138,7 @@ void broadcast_down(int x, int y)
 
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
+    pthread_join(thread_ID_sendPlays, NULL);
 }
 
 /***********************************************************************************************************/
@@ -145,7 +148,7 @@ void broadcast_winner(int player, int x, int y, char *str, int *color)
     pthread_t thread_ID_sendPlays;
 
     memset(buffer, 0, BUFFER_SIZE);
-    sprintf(buffer, "3 %d %d %s %d %d %d", player, x, y, str, color[0], color[1], color[2]);
+    sprintf(buffer, "3 %d %d %d %s %d %d %d", player, x, y, str, color[0], color[1], color[2]);
 
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
@@ -162,7 +165,7 @@ void *read_first_play(void *sock_fd)
     int x = 0, y = 0;
     char buffer[128] = {'\0'};
     player_t *current = players_list_head;
-    pthread_t thread_ID_secondPlay, thread_ID_sendPlays;
+    pthread_t thread_ID_secondPlay;
   
     current = find_fd_list(fd);
 
@@ -186,12 +189,12 @@ void *read_first_play(void *sock_fd)
 
         pthread_mutex_lock(&lock[x][y]);
         resp[fd] = board_play(x, y);
-        pthread_mutex_unlock(&lock[x][y]);
 
         switch (resp[fd].code)
         {
         case 0:
             /* chose filled position - Does nothing */
+            pthread_mutex_unlock(&lock[x][y]);
             break;
         case 1:
             /* first play */
@@ -211,14 +214,14 @@ void *read_first_play(void *sock_fd)
             case 0:
                 update_cell_color(resp[fd].play1[0], resp[fd].play1[1], 255, 255, 255);
                 broadcast_down(resp[fd].play1[0], resp[fd].play1[1]);
+                pthread_mutex_unlock(&lock[resp[fd].play1[0]][resp[fd].play1[1]]);
+
                 break;
 
             case 2:
-                memset(buffer, 0, BUFFER_SIZE);
-                sprintf(buffer, "%d %d %d %s %d %d %d %d %d %d", resp[fd].code, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color[0], current->color[1], current->color[2], 200, 200, 200);
+                
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2]);
-                pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
-                pthread_join(thread_ID_sendPlays, NULL);
+                broadcast_up(resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
                 break;
 
             case -2:
@@ -230,9 +233,11 @@ void *read_first_play(void *sock_fd)
                 // virar as cartas para baixo
                 update_cell_color(resp[fd].play1[0], resp[fd].play1[1], 255, 255, 255);
                 broadcast_down(resp[fd].play1[0], resp[fd].play1[1]);
+                pthread_mutex_unlock(&lock[resp[fd].play1[0]][resp[fd].play1[1]]);
 
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], 255, 255, 255);
                 broadcast_down(resp[fd].play2[0], resp[fd].play2[1]);
+                pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
                 break;
             case 3:
                 //envia a todos a info para virar a carta e que o jogador x ganhou

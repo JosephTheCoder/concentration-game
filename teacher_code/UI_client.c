@@ -44,7 +44,6 @@ void read_plays()
 
     int play_x, play_y;
     char str_play[3];
-    int text_color[3];
     int color[3];
 
     int winner;
@@ -71,7 +70,7 @@ void read_plays()
 
         if (code == 3)
         {
-            sscanf(buffer, "3 %d %d %s %d %d %d", &winner, &play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
+            sscanf(buffer, "3 %d %d %d %s %d %d %d", &winner, &play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
             paint_card(play_x, play_y, color[0], color[1], color[2]);
             write_card(play_x, play_y, str_play, 200, 200, 200); //receive text color from server
             
@@ -89,7 +88,7 @@ void read_plays()
         // turn card up
         else
         {
-            sprintf(buffer, "1 %d %d %s %d %d %d",&play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
+            sscanf(buffer, "1 %d %d %s %d %d %d",&play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
 
             printf("Paint cell %d %d with the color %d %d %d\n", play_x, play_y, color[0], color[1], color[2]);
 
