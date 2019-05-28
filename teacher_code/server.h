@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/select.h>
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <pthread.h>
@@ -20,7 +23,6 @@ typedef struct player{
 } player_t;
 
 int dim;
-char buffer[BUFFER_SIZE];
 
 int  translate_i_to_x();
 int  translate_i_to_y();

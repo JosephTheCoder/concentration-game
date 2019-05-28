@@ -17,7 +17,7 @@
 #define BUFFER_SIZE 128
 
 int sock_fd = 0;
-int dim = 0, n = 0;
+int dim , n = 0;
 
 int terminate = 0;
 
@@ -32,10 +32,8 @@ int write_payload(char *payload, int fd)
         {
             return -1;
         }
-
         written += n;
     }
-
     return written;
 }
 
@@ -74,7 +72,7 @@ void read_plays()
         {
             sscanf(buffer, "3 %d %d %d %s %d %d %d", &winner, &play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
             paint_card(play_x, play_y, color[0], color[1], color[2]);
-            write_card(play_x, play_y, str_play, 200, 200, 200); //receive text color from server
+            write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
             
             printf("The winner is the Player %d!\n", winner);
             break;
@@ -84,7 +82,7 @@ void read_plays()
         else if (code == -1)
         {
             sscanf(buffer, "-1 %d %d", &play_x, &play_y);
-            paint_card(play_x, play_y, 255, 255, 255);
+            paint_card(play_x, play_y, background_color[0], background_color[1], background_color[2]);
         }
 
         // turn card up
@@ -95,7 +93,7 @@ void read_plays()
             printf("Paint cell %d %d with the color %d %d %d\n", play_x, play_y, color[0], color[1], color[2]);
 
             paint_card(play_x, play_y, color[0], color[1], color[2]);
-            write_card(play_x, play_y, str_play, 200, 200, 200); //receive text color from server
+            write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
         }
     }
 }
@@ -126,7 +124,7 @@ void read_board()
             sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play_x, &play_y);
 
             paint_card(play_x, play_y, color[0], color[1], color[2]);
-            write_card(play_x, play_y, str_play, 200, 200, 200);
+            write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]);
         }
     }
 }
@@ -135,6 +133,7 @@ void *read_sdl_events()
 {
     int done = 0;
     SDL_Event event;
+    char buffer[BUFFER_SIZE];
 
     while (!done)
     {
@@ -147,7 +146,7 @@ void *read_sdl_events()
                 // send message to server saying we're about to quit
                 memset(buffer, 0, BUFFER_SIZE);
                 strcpy(buffer, "exiting");
-                printf("Im leaving the tough life");
+                printf("Im leaving the game!\n");
                 write_payload(buffer, sock_fd);
                 done = SDL_TRUE;
                 terminate = 1;
@@ -158,12 +157,14 @@ void *read_sdl_events()
             {
                 int board_x, board_y;
                 get_board_card(event.button.x, event.button.y, &board_x, &board_y);
-
-                // send play to server
-                memset(buffer, 0, BUFFER_SIZE);
-                sprintf(buffer, "%d %d", board_x, board_y);
-                printf("Sending play: %s\n", buffer);
-                write_payload(buffer, sock_fd);
+                if(board_x<dim && board_y<dim)
+                {
+                    // send play to server
+                    memset(buffer, 0, BUFFER_SIZE);
+                    sprintf(buffer, "%d %d", board_x, board_y);
+                    printf("Sending play: %s\n", buffer);
+                    write_payload(buffer, sock_fd);
+                }
             }
             }
         }
@@ -217,7 +218,6 @@ int main(int argc, char *argv[])
 
     /* Read board dimension and color info */
     n = read(sock_fd, buffer, BUFFER_SIZE);
-    buffer[sizeof(buffer)] = '\0';
 
     if (n == -1)
     {

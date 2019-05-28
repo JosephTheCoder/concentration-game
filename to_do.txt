@@ -1,34 +1,16 @@
+
+Não esquecer mudar a cor das letras para branco
+
 Server:
--- Timer of second play
-
--- acabar send_played_card_to_all function
-
--- switch play 1, acabar casos
+Remove player from list when he exits.
 
 
+Client:
+Quando carregas 2a vez numa casa filled ele vira para baixo regista a 1st play, mas não envia ao jogadores
 
 
-Cliente:
--- Receber mensagem de position_filled
 
--- Atualizar cores da board consoante a mensagem recebida do server
+Bot:
 
-       
-            // case 3:
-            //     done = 1;
-            // case 2:
-            //     paint_card(resp.play1[0], resp.play1[1], color[0], color[1], color[2]);
-            //     write_card(resp.play1[0], resp.play1[1], resp.str_play1, 0, 0, 0);
-
-            //     paint_card(resp.play2[0], resp.play2[1], color[0], color[1], color[2]);
-            //     write_card(resp.play2[0], resp.play2[1], resp.str_play2, 0, 0, 0);
-            //     break;
-            // case -2:
-            //     paint_card(resp.play1[0], resp.play1[1], color[0], color[1], color[2]);
-            //     write_card(resp.play1[0], resp.play1[1], resp.str_play1, 255, 0, 0);
-            //     paint_card(resp.play2[0], resp.play2[1], color[0], color[1], color[2]);
-            //     write_card(resp.play2[0], resp.play2[1], resp.str_play2, 255, 0, 0);
-            //     sleep(2);
-            //     paint_card(resp.play1[0], resp.play1[1], 255, 255, 255);
-            //     paint_card(resp.play2[0], resp.play2[1], 255, 255, 255);
-            //     break;
+-- Doesnt wait to play again (sleep not working)
+-- At the end it will spend a lot of time trying to find the right card
