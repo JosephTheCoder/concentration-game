@@ -226,6 +226,7 @@ void *read_first_play(void *sock_fd)
                 break;
 
             case -2:
+
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2]);
                 broadcast_up(resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
 
@@ -239,6 +240,7 @@ void *read_first_play(void *sock_fd)
                 broadcast_down(resp[fd].play2[0], resp[fd].play2[1]);
                 pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
                 break;
+                
             case 3:
                 //envia a todos a info para virar a carta e que o jogador x ganhou
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2]);
