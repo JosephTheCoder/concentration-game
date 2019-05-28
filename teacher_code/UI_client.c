@@ -164,7 +164,7 @@ void *read_sdl_events()
                 {
                     // send play to server
                     memset(buffer, 0, BUFFER_SIZE);
-                    sprintf(buffer, "%d %d", board_x, board_y);
+                    sprintf(buffer, "%d %d\n", board_x, board_y);
                     printf("Sending play: %s\n", buffer);
                     write_payload(buffer, sock_fd);
                     sleep(1);

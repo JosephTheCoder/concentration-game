@@ -96,7 +96,7 @@ void *read_second_play(void *sock_fd)
             pthread_exit(NULL);
         }
 
-        sscanf(buffer, "%d %d", &x, &y);
+        sscanf(buffer, "%d %d\n", &x, &y);
         printf("Buffer 2nd play: %s\n", buffer);
         pthread_mutex_lock(&lock[x][y]);
         resp[fd] = board_play(x, y, fd, 0); //terceiro argumento diz que está tudo OK
@@ -204,7 +204,7 @@ void *read_first_play(void *sock_fd)
             break;
         }
 
-        sscanf(buffer, "%d %d", &x, &y);
+        sscanf(buffer, "%d %d\n", &x, &y);
         printf("Buffer 1st play: %s\n", buffer);
         
         pthread_mutex_lock(&lock[x][y]);
