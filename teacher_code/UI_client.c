@@ -112,7 +112,7 @@ void read_board()
     {
         memset(buffer, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer, sizeof(buffer));
-        //buffer[sizeof(buffer)]='\0';
+        // buffer[sizeof(buffer)]='\0';
 
         if (n == -1)
         {

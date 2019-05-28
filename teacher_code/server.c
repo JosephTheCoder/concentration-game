@@ -332,9 +332,10 @@ void send_state_board(int fd, int dim_board)
 
         printf("Sending cell: %s\n", buffer);
 
-        write_payload(buffer, fd);
+        write(fd, buffer, sizeof(buffer));
     }
 
+    memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "%s", "board_sent");
     write_payload(buffer, fd);
 }
