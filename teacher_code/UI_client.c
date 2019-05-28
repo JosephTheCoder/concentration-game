@@ -125,6 +125,7 @@ void read_board()
             //Tem que receber a cor do texto para saber se escreve ou não ------------------------------
             sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play_x, &play_y);
 
+            printf("buffer: %s\n", buffer);
             paint_card(play_x, play_y, color[0], color[1], color[2]);
             write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]);
         }
@@ -165,6 +166,8 @@ void *read_sdl_events()
                 sprintf(buffer, "%d %d", board_x, board_y);
                 printf("Sending play: %s\n", buffer);
                 write_payload(buffer, sock_fd);
+
+
             }
             }
         }
