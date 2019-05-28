@@ -95,12 +95,8 @@ void *read_second_play(void *sock_fd)
     resp[fd] = board_play(x, y);
 
     printf("code play 2: %d\n", resp[fd].code);
-<<<<<<< HEAD
-    if(resp[fd].code==0)
-=======
 
     if (resp[fd].code == 0)
->>>>>>> 43b62dcdef9063a6d78d54e24c38ba8385773b1b
         pthread_mutex_unlock(&lock[x][y]);
 
     //pthread_exit((void*)&resp);
@@ -231,11 +227,6 @@ void *read_first_play(void *sock_fd)
                 break;
 
             case 2:
-<<<<<<< HEAD
-               
-=======
-
->>>>>>> 43b62dcdef9063a6d78d54e24c38ba8385773b1b
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2]);
                 broadcast_up(resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
                 pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
@@ -265,7 +256,7 @@ void *read_first_play(void *sock_fd)
                 break;
             case 4:
                 //remove player from the list
-                remove_from_list(players_list_head, current->number);
+                //remove_from_list(players_list_head, current->number);
                 printf("Player %d exited!", current->number);
                 terminate = 1;
                 break;
