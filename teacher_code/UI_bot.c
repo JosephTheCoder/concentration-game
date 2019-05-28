@@ -1,25 +1,5 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-
-#include "board_library.h"
-#include "UI_library.h"
-#include "server.h"
 #include "UI_bot.h"
-
-#define BUFFER_SIZE 128
-
-int sock_fd = 0;
-int dim = 0, n = 0;
-
-int terminate = 0;
 
 int write_payload(char *payload, int fd)
 {
@@ -44,15 +24,17 @@ void read_plays()
     int code = 0;
     char buffer[BUFFER_SIZE] = {'\0'};
 
-    int play_x, play_y;
+    int play[2];
     char str_play[3];
     int text_color[3];
     int color[3];
 
+    int winner;
+
     int n;
 
     // Receive response from server
-    while (1)
+    while (!terminate)
     {
         n = 0;
         memset(buffer, 0, BUFFER_SIZE);
@@ -71,30 +53,39 @@ void read_plays()
 
         if (code == 3)
         {
-            //acabou
+            sscanf(buffer, "3 %d %d %d %s %d %d %d", &winner, &play[0], &play[1], str_play, &color[0], &color[1], &color[2]);
+            paint_card(play[0], play[1], color[0], color[1], color[2]);
+            write_card(play[0], play[1], str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
+            
+            printf("The winner is the Player %d!\n", winner);
+            break;
         }
 
         else if (code == 0)
         {
-            sscanf(buffer, "0 %d %d", &play_x, &play_y);
-            paint_card(play_x, play_y, 255, 255, 255);
+            sscanf(buffer, "0 %d %d", &play[0], &play[1]);
+            paint_card(play[0], play[1], background_color[0], background_color[1], background_color[2]);
+            save_playable_position(playable_positions, play);
         }
+
         else
         {
-            sscanf(buffer, "%d %d %d %s %d %d %d %d %d %d", &code, &play_x, &play_y, str_play, &color[0], &color[1], &color[2], &text_color[0], &text_color[1], &text_color[2]);
+            sscanf(buffer, "%d %d %d %s %d %d %d %d %d %d", &code, &play[0], &play[1], str_play, &color[0], &color[1], &color[2], &text_color[0], &text_color[1], &text_color[2]);
 
-            printf("Paint cell %d %d with the color %d %d %d\n", play_x, play_y, color[0], color[1], color[2]);
+            printf("Paint cell %d %d with the color %d %d %d\n", play[0], play[1], color[0], color[1], color[2]);
 
-            paint_card(play_x, play_y, color[0], color[1], color[2]);
+            paint_card(play[0], play[1], color[0], color[1], color[2]);
+            write_card(play[0], play[1], str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
 
-            write_card(play_x, play_y, str_play, 200, 200, 200); //receive text color from server
+            save_in_memory(bot_memory, str_play, play);
+            remove_playable_position(playable_positions, play);
         }
     }
 }
 
 void read_board()
 {
-    int play_x, play_y;
+    int play[2];
     char str_play[3];
     int color[3];
     char buffer[BUFFER_SIZE];
@@ -114,10 +105,20 @@ void read_board()
         else if (strcmp(buffer, "board_sent") != 0)
         {
             //Tem que receber a cor do texto para saber se escreve ou não ------------------------------
-            sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play_x, &play_y);
+            sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play[0], &play[1]);
 
-            paint_card(play_x, play_y, color[0], color[1], color[2]);
-            write_card(play_x, play_y, str_play, 200, 200, 200);
+            paint_card(play[0], play[1], color[0], color[1], color[2]);
+
+            if (color[0] != background_color[0] && color[1] != background_color[1] && color[2] != background_color[2])
+            {
+                write_card(play[0], play[1], str_play, 200, 200, 200);
+            }
+            
+            else
+            {
+                save_playable_position(playable_positions, play);
+                nr_playable_positions++;
+            }
         }
 
         memset(buffer, 0, BUFFER_SIZE);
@@ -149,7 +150,7 @@ void *read_sdl_events()
             }
         }
     }
-    
+
     pthread_exit(NULL);
 }
 
@@ -172,6 +173,77 @@ void *generate_plays(void *arg)
     }
 
     pthread_exit(NULL);
+}
+
+void save_playable_position(playable_place *head, int *new_position)
+{
+    playable_place *current = head;
+
+    while (current->next != NULL)
+        current = current->next;
+
+    /* now we can add a new variable */
+    current->next = (playable_place *)malloc(sizeof(playable_place));
+
+    current->next->position[0] = new_position[0];
+    current->next->position[1] = new_position[1];
+
+    current->next->next = NULL;
+}
+
+void remove_playable_position(playable_place *head, int *position)
+{
+    if (!head)
+        return -1;
+
+    playable_place *temp = head;
+
+    playable_place *prev = NULL;
+
+    while (temp->position[0] != position[0] && temp->position[1] != position[1] && temp->next != NULL)
+    {
+        prev = temp;
+        temp = temp->next;
+    }
+
+    if (temp->position[0] != position[0] && temp->position[1])
+    {
+        if (prev)
+        {
+            prev->next = temp->next;
+        }
+        else
+        {
+            head = temp->next;
+        }
+        free(temp);
+    }
+}
+
+void save_in_memory(memory_place *head, char *letters, int *position)
+{
+    // entra na cabeça, apaga a ultima
+    memory_place *new_place = (memory_place *)malloc(sizeof(memory_place));
+
+    new_place->next = head;
+    new_place->position[0] = position[0];
+    new_place->position[1] = position[1];
+
+    head = new_place;
+    nr_memory_positions++;
+
+    // if max memory has been reached, deletes oldest position
+    if (nr_memory_positions > MAX_POSITIONS_IN_MEMORY)
+    {
+        memory_place *second_last = head;
+
+        while (second_last->next->next != NULL)
+            second_last = second_last->next;
+
+        free(second_last->next);
+
+        second_last->next = NULL;
+    }
 }
 
 int main(int argc, char *argv[])
@@ -241,7 +313,6 @@ int main(int argc, char *argv[])
 
     printf("Received all the board info\n");
 
-    /* Start game (copy from memory-single) */
     pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL); // change this cause function only reads SDL_QUIT
 
     pthread_create(&thread_ID_generate_plays, NULL, generate_plays, NULL);

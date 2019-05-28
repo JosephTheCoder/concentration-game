@@ -72,7 +72,7 @@ void read_plays()
         {
             sscanf(buffer, "3 %d %d %d %s %d %d %d", &winner, &play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
             paint_card(play_x, play_y, color[0], color[1], color[2]);
-            write_card(play_x, play_y, str_play, 200, 200, 200); //receive text color from server
+            write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
             
             printf("The winner is the Player %d!\n", winner);
             break;
@@ -82,7 +82,7 @@ void read_plays()
         else if (code == -1)
         {
             sscanf(buffer, "-1 %d %d", &play_x, &play_y);
-            paint_card(play_x, play_y, 255, 255, 255);
+            paint_card(play_x, play_y, background_color[0], background_color[1], background_color[2]);
         }
 
         // turn card up
@@ -93,7 +93,7 @@ void read_plays()
             printf("Paint cell %d %d with the color %d %d %d\n", play_x, play_y, color[0], color[1], color[2]);
 
             paint_card(play_x, play_y, color[0], color[1], color[2]);
-            write_card(play_x, play_y, str_play, 200, 200, 200); //receive text color from server
+            write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
         }
     }
 }
@@ -124,7 +124,7 @@ void read_board()
             sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play_x, &play_y);
 
             paint_card(play_x, play_y, color[0], color[1], color[2]);
-            write_card(play_x, play_y, str_play, 200, 200, 200);
+            write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]);
         }
     }
 }
