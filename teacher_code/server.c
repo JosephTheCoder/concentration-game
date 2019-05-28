@@ -83,15 +83,26 @@ void *read_second_play(void *sock_fd)
     read(fd, buffer, sizeof(buffer));
     //buffer[strlen(buffer)] = '\0';
 
-        sscanf(buffer, "%d %d", &x, &y);
-        printf("Buffer 2nd play: %s\n", buffer);
-        pthread_mutex_lock(&lock[x][y]);
-        resp[fd] = board_play(x, y);
-       
+    if (strcmp(buffer, "exiting") == 0)
+    {
+        resp[fd].code = 4;
+        pthread_exit(NULL);
+    }
+
+    sscanf(buffer, "%d %d", &x, &y);
+    printf("Buffer 2nd play: %s\n", buffer);
+    pthread_mutex_lock(&lock[x][y]);
+    resp[fd] = board_play(x, y);
+
     printf("code play 2: %d\n", resp[fd].code);
+<<<<<<< HEAD
     if(resp[fd].code==0)
+=======
+
+    if (resp[fd].code == 0)
+>>>>>>> 43b62dcdef9063a6d78d54e24c38ba8385773b1b
         pthread_mutex_unlock(&lock[x][y]);
-        
+
     //pthread_exit((void*)&resp);
     pthread_exit(NULL);
 }
@@ -127,7 +138,6 @@ void broadcast_up(int x, int y, char *str, int *color)
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
     pthread_join(thread_ID_sendPlays, NULL);
-
 }
 
 /***********************************************************************************************************/
@@ -169,10 +179,11 @@ void *read_first_play(void *sock_fd)
     char buffer[128] = {'\0'};
     player_t *current = players_list_head;
     pthread_t thread_ID_secondPlay;
-  
-    current = find_fd_list(fd);
 
-    while (1)
+    current = find_fd_list(fd);
+    int terminate = 0;
+
+    while (!terminate)
     {
         memset(buffer, 0, BUFFER_SIZE);
         read(fd, buffer, sizeof(buffer));
@@ -220,7 +231,11 @@ void *read_first_play(void *sock_fd)
                 break;
 
             case 2:
+<<<<<<< HEAD
                
+=======
+
+>>>>>>> 43b62dcdef9063a6d78d54e24c38ba8385773b1b
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2]);
                 broadcast_up(resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
                 pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
@@ -247,6 +262,12 @@ void *read_first_play(void *sock_fd)
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2]);
                 broadcast_winner(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
                 pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
+                break;
+            case 4:
+                //remove player from the list
+                remove_from_list(players_list_head, current->number);
+                printf("Player %d exited!", current->number);
+                terminate = 1;
                 break;
             }
             break;
@@ -331,9 +352,11 @@ void push_to_list(player_t *head, int *color, int fd, int player_number)
 
 int remove_from_list(player_t *head, int player_number)
 {
-    if (!head) return -1;
+    if (!head)
+        return -1;
 
-    player_t *temp = head;;
+    player_t *temp = head;
+    ;
     player_t *prev = NULL;
 
     while (temp->number != player_number && temp->next != NULL)
