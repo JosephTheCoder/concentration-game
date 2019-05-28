@@ -19,6 +19,8 @@
 int sock_fd = 0;
 int dim = 0, n = 0;
 
+int terminate = 0;
+
 int write_payload(char *payload, int fd)
 {
     int written = 0;
@@ -51,7 +53,7 @@ void read_plays()
     int n;
 
     // Receive response from server
-    while (1)
+    while (!terminate)
     {
         n = 0;
         memset(buffer, 0, BUFFER_SIZE);
@@ -147,6 +149,7 @@ void *read_sdl_events()
                 strcpy(buffer, "exiting");
                 write_payload(buffer, sock_fd);
                 done = SDL_TRUE;
+                terminate = 1;
                 break;
             }
 

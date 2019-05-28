@@ -89,6 +89,8 @@ void *read_second_play(void *sock_fd)
         resp[fd] = board_play(x, y);
        
     printf("code play 2: %d\n", resp[fd].code);
+    if(resp[fd].code==0)
+        pthread_mutex_unlock(&lock[x][y]);
     //pthread_exit((void*)&resp);
     pthread_exit(NULL);
 }
@@ -200,7 +202,7 @@ void *read_first_play(void *sock_fd)
             /* first play */
             update_cell_color(resp[fd].play1[0], resp[fd].play1[1], current->color[0], current->color[1], current->color[2]);
             broadcast_up(resp[fd].play1[0], resp[fd].play1[1], resp[fd].str_play1, current->color);
-
+            pthread_mutex_unlock(&lock[resp[fd].play1[0]][resp[fd].play1[1]]);
             //creates thread for second play, (read with timer)
             pthread_create(&thread_ID_secondPlay, NULL, read_second_play, (void *)&fd);
 
@@ -212,16 +214,15 @@ void *read_first_play(void *sock_fd)
             switch (resp[fd].code)
             {
             case 0:
-                update_cell_color(resp[fd].play1[0], resp[fd].play1[1], 255, 255, 255);
-                broadcast_down(resp[fd].play1[0], resp[fd].play1[1]);
-                pthread_mutex_unlock(&lock[resp[fd].play1[0]][resp[fd].play1[1]]);
-
+                update_cell_color(x, y, 255, 255, 255);
+                broadcast_down(x, y);
                 break;
 
             case 2:
                 
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2]);
                 broadcast_up(resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
+                pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
                 break;
 
             case -2:
@@ -233,7 +234,6 @@ void *read_first_play(void *sock_fd)
                 // virar as cartas para baixo
                 update_cell_color(resp[fd].play1[0], resp[fd].play1[1], 255, 255, 255);
                 broadcast_down(resp[fd].play1[0], resp[fd].play1[1]);
-                pthread_mutex_unlock(&lock[resp[fd].play1[0]][resp[fd].play1[1]]);
 
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], 255, 255, 255);
                 broadcast_down(resp[fd].play2[0], resp[fd].play2[1]);
@@ -243,6 +243,7 @@ void *read_first_play(void *sock_fd)
                 //envia a todos a info para virar a carta e que o jogador x ganhou
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2]);
                 broadcast_winner(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
+                pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
                 break;
             }
             break;
