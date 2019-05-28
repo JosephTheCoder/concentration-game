@@ -28,7 +28,8 @@ typedef struct playable_place{
 
 #define CONCENTRATION_GAME_PORT 3020
 #define BUFFER_SIZE 128
-
+#define FIRST_PLAY 1
+#define SECOND_PLAY 2
 #define MAX_POSITIONS_IN_MEMORY 6
 
 
@@ -36,6 +37,11 @@ int sock_fd = 0;
 int dim = 0, n = 0;
 int terminate = 0;
 
+int bot_play_number = 1;
+
+int player_number;
+
+int my_color[3];
 int background_color[3] = {255, 255, 255};
 int text_color[3] = {200, 200, 200};
 
@@ -50,4 +56,9 @@ int write_payload(char *, int);
 void read_plays();
 void read_board();
 void *read_sdl_events();
-void *generate_plays(void *arg);
+void *generate_first_play(void *arg);
+void save_playable_position(playable_place *head, int *new_position);
+void remove_playable_position(playable_place *head, int *position);
+playable_place *get_playable_position(playable_place *head, int index);
+memory_place *find_relative_in_memory(memory_place *head, char *letters);
+void save_in_memory(memory_place *head, char *letters, int *position);
