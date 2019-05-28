@@ -133,6 +133,7 @@ void *read_sdl_events()
 {
     int done = 0;
     SDL_Event event;
+    char buffer[BUFFER_SIZE];
 
     while (!done)
     {
@@ -215,7 +216,6 @@ int main(int argc, char *argv[])
 
     /* Read board dimension and color info */
     n = read(sock_fd, buffer, BUFFER_SIZE);
-    buffer[sizeof(buffer)] = '\0';
 
     if (n == -1)
     {

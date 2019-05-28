@@ -102,7 +102,6 @@ void read_board()
 
     while (strcmp(buffer, "board_sent") != 0)
     {
-        memset(buffer, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer, sizeof(buffer));
         //buffer[sizeof(buffer)]='\0';
 
@@ -120,6 +119,8 @@ void read_board()
             paint_card(play_x, play_y, color[0], color[1], color[2]);
             write_card(play_x, play_y, str_play, 200, 200, 200);
         }
+
+        memset(buffer, 0, BUFFER_SIZE);
     }
 }
 
@@ -127,6 +128,7 @@ void *read_sdl_events()
 {
     int done = 0;
     SDL_Event event;
+    char buffer[BUFFER_SIZE] = {'\0'};
 
     while (!done)
     {
@@ -155,6 +157,7 @@ void *generate_plays(void *arg)
 {
     int dim = *((int *)arg);
     int board_x, board_y;
+    char buffer[BUFFER_SIZE] = {'\0'};
 
     while (!terminate)
     {
@@ -220,7 +223,6 @@ int main(int argc, char *argv[])
 
     /* Read board dimension and color info */
     n = read(sock_fd, buffer, BUFFER_SIZE);
-    buffer[sizeof(buffer)] = '\0';
 
     if (n == -1)
     {
