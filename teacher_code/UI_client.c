@@ -48,6 +48,8 @@ void read_plays()
 
     int winner;
 
+    int play_origin;
+
     int n;
 
     // Receive response from server
@@ -81,14 +83,14 @@ void read_plays()
         // turn card down
         else if (code == -1)
         {
-            sscanf(buffer, "-1 %d %d", &play_x, &play_y);
+            sscanf(buffer, "-1 %d %d %d", &play_origin, &play_x, &play_y);
             paint_card(play_x, play_y, background_color[0], background_color[1], background_color[2]);
         }
 
         // turn card up
         else
         {
-            sscanf(buffer, "1 %d %d %s %d %d %d",&play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
+            sscanf(buffer, "1 %d %d %d %s %d %d %d", &play_origin, &play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
 
             printf("Paint cell %d %d with the color %d %d %d\n", play_x, play_y, color[0], color[1], color[2]);
 
@@ -164,6 +166,7 @@ void *read_sdl_events()
                     sprintf(buffer, "%d %d", board_x, board_y);
                     printf("Sending play: %s\n", buffer);
                     write_payload(buffer, sock_fd);
+                    sleep(1);
                 }
             }
             }
@@ -176,7 +179,6 @@ int main(int argc, char *argv[])
 {
     struct sockaddr_in server_addr;
     char buffer[BUFFER_SIZE];
-    int my_color[3];
 
     pthread_t thread_ID_read_sdl_events;
     int n = 0;
@@ -225,12 +227,13 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    sscanf(buffer, "%d %d %d %d", &dim, &my_color[0], &my_color[1], &my_color[2]);
+    sscanf(buffer, "%d %d %d %d %d", &player_number, &dim, &my_color[0], &my_color[1], &my_color[2]);
 
+    printf("player number %d\n", player_number);
     printf("board dimension: %d\n", dim);
-    create_board_window(300, 300, dim);
-
     printf("player color: [%d,%d,%d]\n", my_color[0], my_color[1], my_color[2]);
+
+    create_board_window(300, 300, dim);
 
     read_board();
 
