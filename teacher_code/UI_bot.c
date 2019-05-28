@@ -19,6 +19,8 @@
 int sock_fd = 0;
 int dim = 0, n = 0;
 
+int terminate = 0;
+
 int write_payload(char *payload, int fd)
 {
     int written = 0;
@@ -71,6 +73,7 @@ void read_plays()
         {
             //acabou
         }
+
         else if (code == 0)
         {
             sscanf(buffer, "0 %d %d", &play_x, &play_y);
@@ -138,11 +141,13 @@ void *read_sdl_events()
                 strcpy(buffer, "exiting");
                 write_payload(buffer, sock_fd);
                 done = SDL_TRUE;
+                terminate = 1;
                 break;
             }
             }
         }
     }
+    
     pthread_exit(NULL);
 }
 
@@ -151,7 +156,7 @@ void *generate_plays(void *arg)
     int dim = *((int *)arg);
     int board_x, board_y;
 
-    while (1)
+    while (!terminate)
     {
         board_x = rand() % dim;
         board_y = rand() % dim;
@@ -160,7 +165,9 @@ void *generate_plays(void *arg)
         sprintf(buffer, "%d %d", board_x, board_y);
         printf("Sending play: %s\n", buffer);
         write_payload(buffer, sock_fd);
+        sleep(5);
     }
+
     pthread_exit(NULL);
 }
 

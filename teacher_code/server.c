@@ -89,8 +89,10 @@ void *read_second_play(void *sock_fd)
         resp[fd] = board_play(x, y);
        
     printf("code play 2: %d\n", resp[fd].code);
+
     if(resp[fd].code==0)
         pthread_mutex_unlock(&lock[x][y]);
+        
     //pthread_exit((void*)&resp);
     pthread_exit(NULL);
 }
