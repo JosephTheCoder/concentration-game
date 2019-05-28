@@ -18,10 +18,10 @@ typedef struct play_response{
 
 int dim_board;
 board_place *board;
-int play1[2];
+int play1[100][2];
 int n_corrects;
 
 char * get_board_place_str(int, int);
 void init_board(int);
-play_response board_play (int, int);
+play_response board_play (int, int, int, int);
 int linear_conv(int, int);

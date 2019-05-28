@@ -68,32 +68,46 @@ int write_payload(char *payload, int fd)
 
 void *read_second_play(void *sock_fd)
 {
+    
     int fd = *((int *)sock_fd);
-    int x = 0, y = 0;
+    int x = 0, y = 0, rv=0;
     char buffer[BUFFER_SIZE] = {'\0'};
 
-    // add timer
-    //if timer ends -> pthread_exit(flag) = -1 (tempo acabou)
-
-    read(fd, buffer, sizeof(buffer));
-    //buffer[strlen(buffer)] = '\0';
-
-    if (strcmp(buffer, "exiting") == 0)
+    fd_set set;
+    struct timeval timeout;
+    timeout.tv_sec = 5;
+    timeout.tv_usec = 0;
+    FD_ZERO(&set); /* clear the set */
+    FD_SET(fd, &set);
+    rv=select(fd+1, &set, NULL,NULL, &timeout); 
+    if(rv<0) 
     {
-        resp[fd].code = 4;
-        pthread_exit(NULL);
+        perror("select\n"); /* an error accured */
+    }else if(rv==0)
+    {
+        resp[fd] = board_play(x, y, fd, 1);
+        printf("timeout\n"); /* a timeout occured */
+    }else{
+       read(fd, buffer, sizeof(buffer));
+
+        if (strcmp(buffer, "exiting") == 0)
+        {
+            resp[fd].code = 4;
+            pthread_exit(NULL);
+        }
+
+        sscanf(buffer, "%d %d", &x, &y);
+        printf("Buffer 2nd play: %s\n", buffer);
+        pthread_mutex_lock(&lock[x][y]);
+        resp[fd] = board_play(x, y, fd, 0); //terceiro argumento diz que está tudo OK
+
+        printf("code play 2: %d\n", resp[fd].code);
+
+        if (resp[fd].code == 0)
+            pthread_mutex_unlock(&lock[x][y]);
     }
-
-    sscanf(buffer, "%d %d", &x, &y);
-    printf("Buffer 2nd play: %s\n", buffer);
-    pthread_mutex_lock(&lock[x][y]);
-    resp[fd] = board_play(x, y);
-
-    printf("code play 2: %d\n", resp[fd].code);
-
-    if (resp[fd].code == 0)
-        pthread_mutex_unlock(&lock[x][y]);
-
+     printf("saí do select\n");
+    
     //pthread_exit((void*)&resp);
     pthread_exit(NULL);
 }
@@ -174,7 +188,7 @@ void *read_first_play(void *sock_fd)
     current = find_fd_list(fd);
     int terminate = 0;
     
-    char str[3] = NULL;
+    char str[3];
 
     while (!terminate)
     {
@@ -191,12 +205,11 @@ void *read_first_play(void *sock_fd)
         }
 
         sscanf(buffer, "%d %d", &x, &y);
-
         printf("Buffer 1st play: %s\n", buffer);
-
+        
         pthread_mutex_lock(&lock[x][y]);
-        resp[fd] = board_play(x, y);
-
+        resp[fd] = board_play(x, y, fd, 0); // o terceiro argumento diz que nao é para fazer cancel da jogada
+        printf("resp[fd] first play: %d\n", resp[fd].code);
         switch (resp[fd].code)
         {
         case 0:
@@ -205,6 +218,7 @@ void *read_first_play(void *sock_fd)
             break;
         case 1:
             /* first play */
+            resp[fd].code=0;
             update_cell_color(resp[fd].play1[0], resp[fd].play1[1], current->color[0], current->color[1], current->color[2]);
             broadcast_up(current->number, resp[fd].play1[0], resp[fd].play1[1], resp[fd].str_play1, current->color);
             pthread_mutex_unlock(&lock[resp[fd].play1[0]][resp[fd].play1[1]]);
@@ -224,7 +238,10 @@ void *read_first_play(void *sock_fd)
             switch (resp[fd].code)
             {
             case 0:
+
                 update_cell_color(x, y, 255, 255, 255);
+
+                resp[fd] = board_play(x, y, fd, 1); // nao envia jogada, apenas faz cancel da jogada e recomeca a play 1
                 broadcast_down(current->number, x, y, str);
                 break;
 
@@ -236,6 +253,7 @@ void *read_first_play(void *sock_fd)
                 break;
 
             case -2:
+
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2]);
                 broadcast_up(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
 
@@ -247,17 +265,19 @@ void *read_first_play(void *sock_fd)
                 pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
 
                 update_cell_color(resp[fd].play1[0], resp[fd].play1[1], 255, 255, 255);
-                broadcast_down(current->number, resp[fd].play1[0], resp[fd].play1[1] str);
+                broadcast_down(current->number, resp[fd].play1[0], resp[fd].play1[1], str);
                 break;
+
             case 3:
                 //envia a todos a info para virar a carta e que o jogador x ganhou
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2]);
                 broadcast_winner(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
                 pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
                 break;
+
             case 4:
                 //remove player from the list
-                remove_from_list(players_list_head, current->number);
+                //remove_from_list(players_list_head, current->number);
                 printf("Player %d exited!", current->number);
                 terminate = 1;
                 break;

@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <string.h>
 
+
+play_response resp[100];
+int cancel[100];
+
 int linear_conv(int i, int j)
 {
   return j * dim_board + i;
@@ -20,7 +24,10 @@ void init_board(int dim)
 
   dim_board = dim;
   n_corrects = 0;
-  play1[0] = -1;
+
+  for(i=0;i<100;i++)
+      play1[i][0] = -1;
+
   board = malloc(sizeof(board_place) * dim * dim);
 
   for (i = 0; i < (dim_board * dim_board); i++)
@@ -63,69 +70,77 @@ void init_board(int dim)
   }
 }
 
-play_response board_play(int x, int y)
+play_response board_play(int x, int y, int fd, int cancela)
 {
-  play_response resp;
-  resp.code = 10;
-  if (strcmp(get_board_place_str(x, y), "") == 0)
-  {
-    printf("FILLED\n");
-    resp.code = 0;
+  cancel[fd]=cancela;
+  
+  if(cancel[fd]==1){
+    resp[fd].code=0;
+    play1[fd][0] = -1;  
+    play1[fd][1] = -1;
   }
-  else
-  {
-    if (play1[0] == -1)
+  else{
+    resp[fd].code = 10;
+    if (strcmp(get_board_place_str(x, y), "") == 0)
     {
-      printf("FIRST\n");
-      resp.code = 1;
-
-      play1[0] = x;
-      play1[1] = y;
-      resp.play1[0] = play1[0];
-      resp.play1[1] = play1[1];
-      strcpy(resp.str_play1, get_board_place_str(x, y));
+      printf("FILLED\n");
+      resp[fd].code = 0;
     }
     else
     {
-      char *first_str = get_board_place_str(play1[0], play1[1]);
-      char *secnd_str = get_board_place_str(x, y);
-
-      if ((play1[0] == x) && (play1[1] == y))
+      if (play1[fd][0] == -1)
       {
-        resp.code = 0;
-        printf("FILLED\n");
+        printf("FIRST\n");
+        resp[fd].code = 1;
+
+        play1[fd][0] = x;
+        play1[fd][1] = y;
+        resp[fd].play1[0] = play1[fd][0];
+        resp[fd].play1[1] = play1[fd][1];
+        strcpy(resp[fd].str_play1, get_board_place_str(x, y));
       }
       else
       {
-        resp.play1[0] = play1[0];
-        resp.play1[1] = play1[1];
-        strcpy(resp.str_play1, first_str);
-        resp.play2[0] = x;
-        resp.play2[1] = y;
-        strcpy(resp.str_play2, secnd_str);
+        char *first_str = get_board_place_str(play1[fd][0], play1[fd][1]);
+        char *secnd_str = get_board_place_str(x, y);
 
-        if (strcmp(first_str, secnd_str) == 0)
+        if ((play1[fd][0] == x) && (play1[fd][1] == y))
         {
-          printf("CORRECT!!!\n");
-
-          strcpy(first_str, "");
-          strcpy(secnd_str, "");
-
-          n_corrects += 2;
-          if (n_corrects == dim_board * dim_board)
-            resp.code = 3;
-          else
-            resp.code = 2;
+          resp[fd].code = 0;
+          printf("FILLED\n");
         }
         else
         {
-          printf("INCORRECT");
+          resp[fd].play1[0] = play1[fd][0];
+          resp[fd].play1[1] = play1[fd][1];
+          strcpy(resp[fd].str_play1, first_str);
+          resp[fd].play2[0] = x;
+          resp[fd].play2[1] = y;
+          strcpy(resp[fd].str_play2, secnd_str);
 
-          resp.code = -2;
+          if (strcmp(first_str, secnd_str) == 0)
+          {
+            printf("CORRECT!!!\n");
+
+            strcpy(first_str, "");
+            strcpy(secnd_str, "");
+
+            n_corrects += 2;
+            if (n_corrects == dim_board * dim_board)
+              resp[fd].code = 3;
+            else
+              resp[fd].code = 2;
+          }
+          else
+          {
+            printf("INCORRECT");
+
+            resp[fd].code = -2;
+          }
+          play1[fd][0] = -1;
         }
-        play1[0] = -1;
       }
     }
   }
-  return resp;
+  return resp[fd];
 }

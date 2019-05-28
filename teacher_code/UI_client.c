@@ -17,7 +17,7 @@
 #define BUFFER_SIZE 128
 
 int sock_fd = 0;
-int dim = 0, n = 0;
+int dim , n = 0;
 
 int terminate = 0;
 
@@ -160,14 +160,15 @@ void *read_sdl_events()
             {
                 int board_x, board_y;
                 get_board_card(event.button.x, event.button.y, &board_x, &board_y);
-
-                // send play to server
-                memset(buffer, 0, BUFFER_SIZE);
-                sprintf(buffer, "%d %d", board_x, board_y);
-                printf("Sending play: %s\n", buffer);
-                write_payload(buffer, sock_fd);
-
-
+                if(board_x<dim && board_y<dim)
+                {
+                    // send play to server
+                    memset(buffer, 0, BUFFER_SIZE);
+                    sprintf(buffer, "%d %d", board_x, board_y);
+                    printf("Sending play: %s\n", buffer);
+                    write_payload(buffer, sock_fd);
+                    sleep(1);
+                }
             }
             }
         }
