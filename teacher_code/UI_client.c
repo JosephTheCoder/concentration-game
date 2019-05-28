@@ -32,10 +32,8 @@ int write_payload(char *payload, int fd)
         {
             return -1;
         }
-
         written += n;
     }
-
     return written;
 }
 
@@ -147,6 +145,7 @@ void *read_sdl_events()
                 // send message to server saying we're about to quit
                 memset(buffer, 0, BUFFER_SIZE);
                 strcpy(buffer, "exiting");
+                printf("Im leaving the game!\n");
                 write_payload(buffer, sock_fd);
                 done = SDL_TRUE;
                 terminate = 1;

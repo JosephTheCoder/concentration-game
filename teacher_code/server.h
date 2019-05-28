@@ -20,7 +20,6 @@ typedef struct player{
 } player_t;
 
 int dim;
-char buffer[BUFFER_SIZE];
 
 int  translate_i_to_x();
 int  translate_i_to_y();

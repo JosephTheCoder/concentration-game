@@ -73,9 +73,7 @@ void *read_second_play(void *sock_fd)
 {
     int fd = *((int *)sock_fd);
     int x = 0, y = 0;
-    char buffer[128] = {'\0'};
-
-    memset(buffer, 0, BUFFER_SIZE);
+    char buffer[BUFFER_SIZE] = {'\0'};
 
     // add timer
     //if timer ends -> pthread_exit(flag) = -1 (tempo acabou)
@@ -127,8 +125,9 @@ void *send_play_to_all(void *buffer) //arg = string com posição jogada
 void broadcast_up(int x, int y, char *str, int *color)
 {
     pthread_t thread_ID_sendPlays;
+    char buffer[BUFFER_SIZE] = {'\0'};
 
-    memset(buffer, 0, BUFFER_SIZE);
+    // memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "1 %d %d %s %d %d %d", x, y, str, color[0], color[1], color[2]);
 
     // construção buffer
@@ -141,8 +140,9 @@ void broadcast_up(int x, int y, char *str, int *color)
 void broadcast_down(int x, int y)
 {
     pthread_t thread_ID_sendPlays;
+    char buffer[BUFFER_SIZE] = {'\0'};
 
-    memset(buffer, 0, BUFFER_SIZE);
+    // memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "-1 %d %d", x, y);
 
     // construção buffer
@@ -155,8 +155,9 @@ void broadcast_down(int x, int y)
 void broadcast_winner(int player, int x, int y, char *str, int *color)
 {
     pthread_t thread_ID_sendPlays;
+    char buffer[BUFFER_SIZE] = {'\0'};
 
-    memset(buffer, 0, BUFFER_SIZE);
+    // memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "3 %d %d %d %s %d %d %d", player, x, y, str, color[0], color[1], color[2]);
 
     // construção buffer
@@ -172,7 +173,8 @@ void *read_first_play(void *sock_fd)
     printf("fd: %d\n", fd);
 
     int x = 0, y = 0;
-    char buffer[128] = {'\0'};
+    char buffer[BUFFER_SIZE] = {'\0'};
+
     player_t *current = players_list_head;
     pthread_t thread_ID_secondPlay;
 
@@ -283,6 +285,7 @@ void send_state_board(int fd, int dim_board)
     int i = 0;
     char str[12];
     char color[11] = {'\0'};
+    char buffer[BUFFER_SIZE] = {'\0'};
 
     for (i = 0; i < dim * dim; i++)
     {
@@ -314,7 +317,6 @@ void send_state_board(int fd, int dim_board)
         write(fd, buffer, sizeof(buffer));
     }
 
-    memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "%s", "board_sent");
     write_payload(buffer, fd);
 }
@@ -383,7 +385,7 @@ int main(int argc, char *argv[])
 
     int send_state = 0;
 
-    char buffer[BUFFER_SIZE];
+    char buffer[BUFFER_SIZE] = {'\0'};
 
     int *color;
 
@@ -472,7 +474,7 @@ int main(int argc, char *argv[])
             push_to_list(players_list_head, color, new_fd, nr_players);
         }
 
-        memset(buffer, 0, BUFFER_SIZE); //erase buffer before inserting data
+        // memset(buffer, 0, BUFFER_SIZE); //erase buffer before inserting data
         sprintf(buffer, "%d %d %d %d", dim, color[0], color[1], color[2]);
         write_payload(buffer, new_fd);
 
