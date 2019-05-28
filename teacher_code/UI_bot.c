@@ -225,19 +225,13 @@ void *generate_first_play(void *arg)
 
 void save_playable_position(playable_place *head, int *new_position)
 {
-    playable_place *current = head;
+    playable_place *playable_pos = (playable_place *)malloc(sizeof(playable_place));
 
-    while (current->next != NULL)
-        current = current->next;
+    playable_pos->next = head;
+    playable_pos->position[0] = new_position[0];
+    playable_pos->position[1] = new_position[1];
 
-    /* now we can add a new variable */
-    current->next = (playable_place *)malloc(sizeof(playable_place));
-
-    current->next->position[0] = new_position[0];
-    current->next->position[1] = new_position[1];
-
-    current->next->next = NULL;
-
+    head = playable_pos;
     nr_playable_positions++;
 }
 
