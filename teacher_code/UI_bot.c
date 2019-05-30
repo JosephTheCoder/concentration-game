@@ -91,7 +91,7 @@ void read_plays()
 
             remove_playable_position(playable_positions, play);
             
-            // SEGMENTATION FAULTY
+            // SEGMENTATION FAULT
             // If the bot has already played the first card, makes second play
             if (bot_play_number == SECOND_PLAY)
             {
@@ -135,6 +135,7 @@ void read_board()
 
     while (strcmp(buffer, "board_sent") != 0)
     {
+        printf("before read\n");
         n = read(sock_fd, buffer, sizeof(buffer));
         //buffer[sizeof(buffer)]='\0';
 
@@ -148,7 +149,7 @@ void read_board()
         {
             //Tem que receber a cor do texto para saber se escreve ou não ------------------------------
             sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play[0], &play[1]);
-
+            printf("buffer: %s\n", buffer);
             paint_card(play[0], play[1], color[0], color[1], color[2]);
 
             if (color[0] != background_color[0] && color[1] != background_color[1] && color[2] != background_color[2])
