@@ -71,11 +71,11 @@ void read_plays()
         {
             sscanf(buffer, "-1 %d %d %d %s", &play_origin, &play[0], &play[1], str_play);
             paint_card(play[0], play[1], background_color[0], background_color[1], background_color[2]);
-            save_playable_position(playable_positions, play);
+            save_playable_position(play);
 
             if (play_origin == player_number)
             {
-                save_in_memory(bot_memory, str_play, play);
+                save_in_memory(str_play, play);
                 bot_play_number = 1;
             }
         }
@@ -89,14 +89,14 @@ void read_plays()
             paint_card(play[0], play[1], color[0], color[1], color[2]);
             write_card(play[0], play[1], str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
 
-            remove_playable_position(playable_positions, play);
+            remove_playable_position(play);
             
             // SEGMENTATION FAULT
             // If the bot has already played the first card, makes second play
             if (bot_play_number == SECOND_PLAY)
             {
                 // check if the bot has seen a card like the one played
-                position_in_memory = find_relative_in_memory(bot_memory, str_play);
+                position_in_memory = find_relative_in_memory(str_play);
 
                 if (position_in_memory != NULL)
                 {
@@ -111,7 +111,7 @@ void read_plays()
                 {
                     position_index = rand() % nr_playable_positions;
 
-                    random_place = get_playable_position(playable_positions, position_index);
+                    random_place = get_playable_position(position_index);
 
                     memset(buffer, 0, BUFFER_SIZE);
                     sprintf(buffer, "%d %d", random_place->position[0], random_place->position[1]);
@@ -147,7 +147,6 @@ void read_board()
 
         else if (strcmp(buffer, "board_sent") != 0)
         {
-            //Tem que receber a cor do texto para saber se escreve ou não ------------------------------
             sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play[0], &play[1]);
 
             paint_card(play[0], play[1], color[0], color[1], color[2]);
@@ -157,9 +156,10 @@ void read_board()
                 write_card(play[0], play[1], str_play, 200, 200, 200);
             }
 
-            else if (color[0] == background_color[0] && color[1] == background_color[1] && color[2] == background_color[2])
+            else
             {
-                save_playable_position(playable_positions, play);
+                printf("Adding playable position\n");
+                save_playable_position(play);
             }
         }
     }
@@ -208,7 +208,7 @@ void *generate_first_play(void *arg)
         {
             position_index = rand() % nr_playable_positions;
 
-            random_place = get_playable_position(playable_positions, position_index);
+            random_place = get_playable_position(position_index);
 
             memset(buffer, 0, BUFFER_SIZE);
             sprintf(buffer, "%d %d", random_place->position[0], random_place->position[1]);
@@ -222,21 +222,22 @@ void *generate_first_play(void *arg)
     pthread_exit(NULL);
 }
 
-void save_playable_position(playable_place *head, int *new_position)
+void save_playable_position(int *new_position)
 {
     playable_place *playable_pos = (playable_place *)malloc(sizeof(playable_place));
 
-    playable_pos->next = head;
+    playable_pos->next = playable_positions;
     playable_pos->position[0] = new_position[0];
     playable_pos->position[1] = new_position[1];
 
-    head = playable_pos;
+    // head = playable_pos;
+    playable_positions = playable_pos;
     nr_playable_positions++;
 }
 
-void remove_playable_position(playable_place *head, int *position)
+void remove_playable_position(int *position)
 {
-    playable_place *temp = head;
+    playable_place *temp = playable_positions;
 
     playable_place *prev = NULL;
 
@@ -254,17 +255,17 @@ void remove_playable_position(playable_place *head, int *position)
         }
         else
         {
-            head = temp->next;
+            playable_positions = temp->next;
         }
         free(temp);
         nr_playable_positions--;
     }
 }
 
-playable_place *get_playable_position(playable_place *head, int index)
+playable_place *get_playable_position(int index)
 {
     int i = 0;
-    playable_place *current = head;
+    playable_place *current = playable_positions;
 
     for (i = 0; i < index; i++)
     {
@@ -275,22 +276,22 @@ playable_place *get_playable_position(playable_place *head, int index)
     return current;
 }
 
-void save_in_memory(memory_place *head, char *letters, int *position)
+void save_in_memory(char *letters, int *position)
 {
     // entra na cabeça, apaga a ultima
     memory_place *new_place = (memory_place *)malloc(sizeof(memory_place));
 
-    new_place->next = head;
+    new_place->next = bot_memory;
     new_place->position[0] = position[0];
     new_place->position[1] = position[1];
 
-    head = new_place;
+    bot_memory = new_place;
     nr_memory_positions++;
 
     // if max memory has been reached, deletes oldest position
     if (nr_memory_positions > MAX_POSITIONS_IN_MEMORY)
     {
-        memory_place *second_last = head;
+        memory_place *second_last = bot_memory;
 
         while (second_last->next->next != NULL)
             second_last = second_last->next;
@@ -302,9 +303,9 @@ void save_in_memory(memory_place *head, char *letters, int *position)
     }
 }
 
-memory_place *find_relative_in_memory(memory_place *head, char *letters)
+memory_place *find_relative_in_memory(char *letters)
 {
-    memory_place *current = head;
+    memory_place *current = bot_memory;
 
     while (current->next != NULL)
     {

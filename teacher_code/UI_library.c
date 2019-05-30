@@ -27,13 +27,11 @@ void write_card(int  board_x, int board_y, char * text, int r, int g, int b){
  	SDL_Surface * surface = TTF_RenderText_Solid(font, text, color);
 
 	SDL_Texture* Background_Tx = SDL_CreateTextureFromSurface(renderer, surface);
-	  SDL_FreeSurface(surface); /* we got the texture now -> free surface */
+	SDL_FreeSurface(surface); /* we got the texture now -> free surface */
 
-
-		SDL_RenderCopy(renderer, Background_Tx, NULL, &rect);
-SDL_RenderPresent(renderer);
-
-
+	SDL_Delay(50);
+	SDL_RenderCopy(renderer, Background_Tx, NULL, &rect);
+	SDL_RenderPresent(renderer);
 }
 
 
@@ -44,16 +42,17 @@ void paint_card(int  board_x, int board_y , int r, int g, int b){
 	rect.y = board_y * row_height;
 	rect.w = col_width+1;
 	rect.h = row_height+1;
+	
+	SDL_Delay(5);
 	SDL_SetRenderDrawColor(renderer, r, g, b, SDL_ALPHA_OPAQUE);
 	SDL_RenderFillRect(renderer, &rect);
-
+	
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 	SDL_RenderDrawRect(renderer, &rect);
 
 	SDL_RenderPresent(renderer);
-
-
 }
+
 void clear_card(int  board_x, int board_y){
 	paint_card(board_x, board_y , 255, 255, 255);
 
