@@ -29,6 +29,9 @@ typedef struct playable_place{
 #define CONCENTRATION_GAME_PORT 3014
 #define BUFFER_SIZE 128
 
+#define SEND_PLAY 1
+#define WAITING_RESPONSE 2
+
 #define SEND_FIRST_PLAY 1
 #define SEND_SECOND_PLAY 2
 #define WAITING_FIRST_PLAY_RESPONSE 3
