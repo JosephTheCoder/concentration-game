@@ -4,13 +4,59 @@ Não esquecer mudar a cor das letras para branco
 Server:
 Remove player from list when he exits.
 
+enviar dim e cor na mesma mensagem
+
+enviar numero do jogador logo ao inicio
+enviar id do jogador em cada buffer
+
 
 Client:
 Quando carregas 2a vez numa casa filled ele vira para baixo regista a 1st play, mas não envia ao jogadores
 
+Quando fazes a segunda jogada numa carta filled que já tinha sido jogada por outro jogador mas com padrao errado, ele espera pela
+saida das cartas erradas e joga.
+
+When exit client says leaving the game but server doesnt get response
 
 
 Bot:
 
+Não recebe a board
+
 -- Doesnt wait to play again (sleep not working)
 -- At the end it will spend a lot of time trying to find the right card
+
+
+Bot Memory:
+
+Para melhorar o bot podemos criar uma lista que guarda as ultimas 5 cartas jogadas.
+
+_____________________________
+
+tenho de manter uma board no bot que guarda para cada posição
+se esta preenchida ou não.
+
+ou
+
+global int position_list_size;
+
+gerar lista de posições jogáveis [int pos[x,y], int jogavel]
+    cada vez que uma carta é pintada com uma cor que não a do bot
+        remove da lista
+    cada vez que uma carta é virada para baixo
+        adiciona à lista
+
+gerar lista das ultimas 6 posições jogadas [int pos[x,y], char letters[3]]
+
+while(!terminate)
+    gerar random index para a lista de posições jogaveis, usando o position_list_size
+
+    jogar essa posição 
+
+    se não estiver filled
+
+    correr a lista das ultimas cartas jogadas
+        se a carta escolhida tiver o mesmo padrão mas posição diferente de algum dos 
+        elementos da lista, jogamos a carta da lista.
+
+_____________________________

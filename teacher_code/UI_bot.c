@@ -90,7 +90,8 @@ void read_plays()
             write_card(play[0], play[1], str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
 
             remove_playable_position(playable_positions, play);
-
+            
+            // SEGMENTATION FAULTY
             // If the bot has already played the first card, makes second play
             if (bot_play_number == SECOND_PLAY)
             {
