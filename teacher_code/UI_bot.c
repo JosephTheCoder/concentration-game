@@ -386,7 +386,7 @@ int main(int argc, char *argv[])
 
     pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL); // change this cause function only reads SDL_QUIT
 
-    pthread_create(&thread_ID_generate_plays, NULL, generate_first_play, NULL);
+    pthread_create(&thread_ID_generate_plays, NULL, generate_first_play, (void *)&dim);
 
     read_plays();
 
