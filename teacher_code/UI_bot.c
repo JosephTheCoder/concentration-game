@@ -160,7 +160,6 @@ void read_board()
             else
             {
                 save_playable_position(playable_positions, play);
-                nr_playable_positions++;
             }
         }
     }
