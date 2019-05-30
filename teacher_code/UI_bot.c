@@ -135,7 +135,7 @@ void read_board()
 
     while (strcmp(buffer, "board_sent") != 0)
     {
-        printf("before read\n");
+        memset(buffer, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer, sizeof(buffer));
         //buffer[sizeof(buffer)]='\0';
 
@@ -149,7 +149,7 @@ void read_board()
         {
             //Tem que receber a cor do texto para saber se escreve ou não ------------------------------
             sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play[0], &play[1]);
-            printf("buffer: %s\n", buffer);
+
             paint_card(play[0], play[1], color[0], color[1], color[2]);
 
             if (color[0] != background_color[0] && color[1] != background_color[1] && color[2] != background_color[2])
@@ -163,8 +163,6 @@ void read_board()
                 nr_playable_positions++;
             }
         }
-
-        memset(buffer, 0, BUFFER_SIZE);
     }
 }
 
