@@ -72,7 +72,9 @@ void read_plays()
             sscanf(buffer, "-1 %d %d %d %s", &play_origin, &play[0], &play[1], str_play);
             paint_card(play[0], play[1], background_color[0], background_color[1], background_color[2]);
             save_playable_position(play);
+
             sleep(2);
+
             if (play_origin == player_number)
             {
                 save_in_memory(str_play, play);
@@ -88,7 +90,9 @@ void read_plays()
 
             paint_card(play[0], play[1], color[0], color[1], color[2]);
             write_card(play[0], play[1], str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
+            
             sleep(2);
+            
             remove_playable_position(play);
 
             if (bot_play_number == FIRST_PLAY)
@@ -97,7 +101,7 @@ void read_plays()
             // SEGMENTATION FAULT
             // If the bot has already played the first card, makes second play
             if (bot_play_number == SECOND_PLAY)
-            {
+            {                
                 // check if the bot has seen a card like the one played
                 position_in_memory = find_relative_in_memory(str_play);
 
@@ -219,6 +223,7 @@ void *generate_first_play(void *arg)
             printf("Sending play: %s\n", buffer);
 
             write_payload(buffer, sock_fd);
+            bot_play_number = SECOND_PLAY;
         }
     }
 
