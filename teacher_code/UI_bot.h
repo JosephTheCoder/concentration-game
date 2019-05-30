@@ -26,7 +26,7 @@ typedef struct playable_place{
 } playable_place;
 
 
-#define CONCENTRATION_GAME_PORT 3020
+#define CONCENTRATION_GAME_PORT 3012
 #define BUFFER_SIZE 128
 #define FIRST_PLAY 1
 #define SECOND_PLAY 2
@@ -57,8 +57,8 @@ void read_plays();
 void read_board();
 void *read_sdl_events();
 void *generate_first_play(void *arg);
-void save_playable_position(playable_place *head, int *new_position);
-void remove_playable_position(playable_place *head, int *position);
-playable_place *get_playable_position(playable_place *head, int index);
-memory_place *find_relative_in_memory(memory_place *head, char *letters);
-void save_in_memory(memory_place *head, char *letters, int *position);
+void save_playable_position(int *new_position);
+void remove_playable_position(int *position);
+playable_place *get_playable_position(int index);
+memory_place *find_relative_in_memory(char *letters);
+void save_in_memory(char *letters, int *position);
