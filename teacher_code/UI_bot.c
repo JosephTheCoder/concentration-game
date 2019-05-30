@@ -72,11 +72,11 @@ void read_plays()
             sscanf(buffer, "-1 %d %d %d %s", &play_origin, &play[0], &play[1], str_play);
             paint_card(play[0], play[1], background_color[0], background_color[1], background_color[2]);
             save_playable_position(play);
-
+            sleep(2);
             if (play_origin == player_number)
             {
                 save_in_memory(str_play, play);
-                bot_play_number = 1;
+                bot_play_number = FIRST_PLAY;
             }
         }
 
@@ -88,8 +88,11 @@ void read_plays()
 
             paint_card(play[0], play[1], color[0], color[1], color[2]);
             write_card(play[0], play[1], str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
-
+            sleep(2);
             remove_playable_position(play);
+
+            if (bot_play_number == FIRST_PLAY)
+                bot_play_number = SECOND_PLAY;
             
             // SEGMENTATION FAULT
             // If the bot has already played the first card, makes second play
@@ -147,7 +150,6 @@ void read_board()
 
         else if (strcmp(buffer, "board_sent") != 0)
         {
-            printf("%s\n", buffer);
             sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play[0], &play[1]);
 
             paint_card(play[0], play[1], color[0], color[1], color[2]);
