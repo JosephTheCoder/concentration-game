@@ -65,6 +65,7 @@ void read_plays()
             write_card(play[0], play[1], str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
 
             printf("The winner is the Player %d!\n", winner);
+            bot_status = IDLE;
             break;
         }
 
@@ -360,6 +361,7 @@ int main(int argc, char *argv[])
 
     pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL); // change this cause function only reads SDL_QUIT
 
+    bot_status = SEND_PLAY;
     pthread_create(&thread_ID_generate_plays, NULL, generate_first_play, (void *)&dim);
 
     read_plays();
