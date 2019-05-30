@@ -147,6 +147,7 @@ void read_board()
 
         else if (strcmp(buffer, "board_sent") != 0)
         {
+            printf("%s\n");
             sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play[0], &play[1]);
 
             paint_card(play[0], play[1], color[0], color[1], color[2]);
