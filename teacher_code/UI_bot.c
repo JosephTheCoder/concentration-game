@@ -268,6 +268,7 @@ playable_place *get_playable_position(playable_place *head, int index)
 
     for (i = 0; i < index; i++)
     {
+        printf("%d %d\n", current->position[0], current->position[1]);
         current = current->next;
     }
 
