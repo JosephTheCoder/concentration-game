@@ -1,5 +1,5 @@
 
-#define CONCENTRATION_GAME_PORT 3011
+#define CONCENTRATION_GAME_PORT 3012
 
 board_place *board_client;
 
