@@ -28,8 +28,13 @@ typedef struct playable_place{
 
 #define CONCENTRATION_GAME_PORT 3012
 #define BUFFER_SIZE 128
-#define FIRST_PLAY 1
-#define SECOND_PLAY 2
+
+#define SEND_FIRST_PLAY 1
+#define SEND_SECOND_PLAY 2
+#define WAITING_FIRST_PLAY_RESPONSE 3
+#define WAITING_SECOND_PLAY_RESPONSE 4
+#define IDLE 5
+
 #define MAX_POSITIONS_IN_MEMORY 6
 
 
@@ -37,7 +42,7 @@ int sock_fd = 0;
 int dim = 0, n = 0;
 int terminate = 0;
 
-int bot_play_number = 1;
+int bot_status = IDLE;
 
 int player_number;
 

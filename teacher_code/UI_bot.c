@@ -24,6 +24,8 @@ void read_plays()
     int code = 0;
     char buffer[BUFFER_SIZE] = {'\0'};
 
+    int play1[2];
+
     int play[2];
     char str_play[3];
     int text_color[3];
@@ -56,7 +58,8 @@ void read_plays()
 
         sscanf(buffer, "%d", &code);
         printf("buffer recebido no read plays: %s\n", buffer);
-
+        
+        // receives WINNER signal
         if (code == 3)
         {
             sscanf(buffer, "3 %d %d %d %s %d %d %d", &winner, &play[0], &play[1], str_play, &color[0], &color[1], &color[2]);
@@ -67,6 +70,7 @@ void read_plays()
             break;
         }
 
+        // receives signal to turn card DOWN
         else if (code == -1)
         {
             sscanf(buffer, "-1 %d %d %d %s", &play_origin, &play[0], &play[1], str_play);
@@ -75,13 +79,25 @@ void read_plays()
 
             sleep(2);
 
+            // if it refers to a bot play
             if (play_origin == player_number)
             {
                 save_in_memory(str_play, play);
-                bot_play_number = FIRST_PLAY;
+
+                if (bot_status == WAITING_FIRST_PLAY_RESPONSE)
+                    bot_status = SEND_FIRST_PLAY;
+
+                // If second card is wrong we also turn the first down
+                else if (bot_status == WAITING_SECOND_PLAY_RESPONSE)
+                {
+                    paint_card(play1[0], play1[1], background_color[0], background_color[1], background_color[2]);
+                    save_playable_position(play1);
+                    bot_status = SEND_FIRST_PLAY;
+                }
             }
         }
 
+        // receives signal to turn card UP
         else
         {
             sscanf(buffer, "%d %d %d %s %d %d %d %d %d %d", &code, &play[0], &play[1], str_play, &color[0], &color[1], &color[2], &text_color[0], &text_color[1], &text_color[2]);
@@ -95,12 +111,11 @@ void read_plays()
             
             remove_playable_position(play);
 
-            if (bot_play_number == FIRST_PLAY)
-                bot_play_number = SECOND_PLAY;
+            if (bot_status == WAITING_FIRST_PLAY_RESPONSE)
+                bot_status = SEND_SECOND_PLAY;
             
-            // SEGMENTATION FAULT
             // If the bot has already played the first card, makes second play
-            if (bot_play_number == SECOND_PLAY)
+            if (bot_status == SEND_SECOND_PLAY)
             {                
                 // check if the bot has seen a card like the one played
                 position_in_memory = find_relative_in_memory(str_play);
@@ -111,6 +126,8 @@ void read_plays()
                     sprintf(buffer, "%d %d", position_in_memory->position[0], position_in_memory->position[1]);
                     printf("Sending play: %s\n", buffer);
                     write_payload(buffer, sock_fd);
+
+                    bot_status = WAITING_SECOND_PLAY_RESPONSE;
                 }
 
                 // if he has never seen one, play a random card from the playable list
@@ -126,6 +143,8 @@ void read_plays()
                     printf("Sending play: %s\n", buffer);
 
                     write_payload(buffer, sock_fd);
+
+                    bot_status = WAITING_SECOND_PLAY_RESPONSE;
                 }
             }
         }
@@ -211,7 +230,7 @@ void *generate_first_play(void *arg)
 
     while (!terminate)
     {
-        if (bot_play_number == FIRST_PLAY)
+        if (bot_status == SEND_FIRST_PLAY)
         {
             position_index = rand() % nr_playable_positions;
 
@@ -223,7 +242,7 @@ void *generate_first_play(void *arg)
             printf("Sending play: %s\n", buffer);
 
             write_payload(buffer, sock_fd);
-            bot_play_number = SECOND_PLAY;
+            bot_status = WAITING_FIRST_PLAY_RESPONSE;
         }
     }
 
