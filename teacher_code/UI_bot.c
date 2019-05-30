@@ -372,8 +372,9 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    sscanf(buffer, "%d %d %d %d", &dim, &my_color[0], &my_color[1], &my_color[2]);
+    sscanf(buffer, "%d %d %d %d %d", &player_number, &dim, &my_color[0], &my_color[1], &my_color[2]);
 
+    printf("player number %d\n", player_number);
     printf("board dimension: %d\n", dim);
     create_board_window(300, 300, dim);
 

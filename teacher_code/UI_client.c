@@ -167,7 +167,7 @@ void *read_sdl_events()
                     sprintf(buffer, "%d %d\n", board_x, board_y);
                     printf("Sending play: %s\n", buffer);
                     write_payload(buffer, sock_fd);
-                    sleep(1);
+                    
                 }
             }
             }

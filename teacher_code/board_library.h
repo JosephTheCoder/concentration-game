@@ -3,6 +3,7 @@
 typedef struct board_place{
   char v[3]; 
   int color[3];
+  int state;
 } board_place;
 
 typedef struct play_response{
@@ -22,6 +23,7 @@ int play1[100][2];
 int n_corrects;
 
 char * get_board_place_str(int, int);
+int get_card_state(int , int );
 void init_board(int);
 play_response board_play (int, int, int, int);
 int linear_conv(int, int);

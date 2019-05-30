@@ -23,13 +23,15 @@ player_t *find_fd_list(int fd)
 
 /**************************************************************************************************/
 
-void update_cell_color(int x, int y, int r, int g, int b)
+void update_cell_color(int x, int y, int r, int g, int b, int state)
 {
     int i = linear_conv(x, y);
-
+    board[i].state=state;
     board[i].color[0] = r;
     board[i].color[1] = g;
     board[i].color[2] = b;
+
+    printf("\nupdated cell (%d,%d) state to :%d\n", x, y, state);
 }
 /**************************************************************************************************/
 
@@ -219,7 +221,7 @@ void *read_first_play(void *sock_fd)
         case 1:
             /* first play */
             resp[fd].code=0;
-            update_cell_color(resp[fd].play1[0], resp[fd].play1[1], current->color[0], current->color[1], current->color[2]);
+            update_cell_color(resp[fd].play1[0], resp[fd].play1[1], current->color[0], current->color[1], current->color[2], 1);
             broadcast_up(current->number, resp[fd].play1[0], resp[fd].play1[1], resp[fd].str_play1, current->color);
             pthread_mutex_unlock(&lock[resp[fd].play1[0]][resp[fd].play1[1]]);
             
@@ -239,7 +241,7 @@ void *read_first_play(void *sock_fd)
             {
             case 0:
 
-                update_cell_color(x, y, 255, 255, 255);
+                update_cell_color(x, y, 255, 255, 255, 0);
 
                 resp[fd] = board_play(x, y, fd, 1); // nao envia jogada, apenas faz cancel da jogada e recomeca a play 1
                 broadcast_down(current->number, x, y, str);
@@ -247,30 +249,30 @@ void *read_first_play(void *sock_fd)
 
             case 2:
 
-                update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2]);
+                update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2], 1);
                 broadcast_up(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
                 pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
                 break;
 
             case -2:
 
-                update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2]);
+                update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2], 1);
                 broadcast_up(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
 
                 sleep(2);
 
-                update_cell_color(resp[fd].play2[0], resp[fd].play2[1], 255, 255, 255);
                 // adiccionar str ao broadcast down
                 broadcast_down(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2);
                 pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
-
-                update_cell_color(resp[fd].play1[0], resp[fd].play1[1], 255, 255, 255);
                 broadcast_down(current->number, resp[fd].play1[0], resp[fd].play1[1], str);
+
+                update_cell_color(resp[fd].play1[0], resp[fd].play1[1], 255, 255, 255, 0);
+                update_cell_color(resp[fd].play2[0], resp[fd].play2[1], 255, 255, 255, 0);
                 break;
 
             case 3:
                 //envia a todos a info para virar a carta e que o jogador x ganhou
-                update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2]);
+                update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2], 1);
                 broadcast_winner(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
                 pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
                 break;

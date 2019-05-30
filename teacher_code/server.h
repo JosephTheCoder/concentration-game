@@ -38,7 +38,7 @@ int translate_i_to_x(int, int);
 int translate_i_to_y(int, int);
 
 player_t * find_fd_list();
-void update_cell_color(int, int, int, int, int);
+void update_cell_color(int, int, int, int, int, int);
 int *random_color();
 void *read_second_play(void *);
 void *send_play_to_board(void *);
