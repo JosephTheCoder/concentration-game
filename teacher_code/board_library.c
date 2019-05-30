@@ -16,6 +16,11 @@ char *get_board_place_str(int i, int j)
   return board[linear_conv(i, j)].v;
 }
 
+int get_card_state(int i, int j)
+{
+  return board[linear_conv(i, j)].state;
+}
+
 void init_board(int dim)
 {
   int count = 0;
@@ -36,6 +41,7 @@ void init_board(int dim)
     board[i].color[0] = 255;
     board[i].color[1] = 255;
     board[i].color[2] = 255;
+    board[i].state=0;
   }
 
   for (char c1 = 'a'; c1 < ('a' + dim_board); c1++)
@@ -81,7 +87,7 @@ play_response board_play(int x, int y, int fd, int cancela)
   }
   else{
     resp[fd].code = 10;
-    if (strcmp(get_board_place_str(x, y), "") == 0)
+    if (get_card_state(x, y)==1)
     {
       printf("FILLED\n");
       resp[fd].code = 0;
@@ -101,6 +107,7 @@ play_response board_play(int x, int y, int fd, int cancela)
       }
       else
       {
+
         char *first_str = get_board_place_str(play1[fd][0], play1[fd][1]);
         char *secnd_str = get_board_place_str(x, y);
 
@@ -121,10 +128,6 @@ play_response board_play(int x, int y, int fd, int cancela)
           if (strcmp(first_str, secnd_str) == 0)
           {
             printf("CORRECT!!!\n");
-
-            strcpy(first_str, "");
-            strcpy(secnd_str, "");
-
             n_corrects += 2;
             if (n_corrects == dim_board * dim_board)
               resp[fd].code = 3;
