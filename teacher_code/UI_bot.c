@@ -152,12 +152,12 @@ void read_board()
 
             paint_card(play[0], play[1], color[0], color[1], color[2]);
 
-            if (color[0] != background_color[0] && color[1] != background_color[1] && color[2] != background_color[2])
+            if (color[0] != background_color[0] || color[1] != background_color[1] || color[2] != background_color[2])
             {
                 write_card(play[0], play[1], str_play, 200, 200, 200);
             }
 
-            else
+            else if (color[0] == background_color[0] && color[1] == background_color[1] && color[2] == background_color[2])
             {
                 save_playable_position(playable_positions, play);
             }
