@@ -255,19 +255,17 @@ void broadcast_winners()
 void *read_first_play(void *sock_fd)
 {
     int fd = *((int *)sock_fd);
-    int n = 0;
+    int n=0, x = 0, y = 0;
     printf("fd: %d\n", fd);
-
-    int x = 0, y = 0;
     char buffer[BUFFER_SIZE] = {'\0'};
+    int terminate = 0;
+    char str[3];
 
     player_t *current = players_list_head;
     player_t *aux = players_list_head;
     pthread_t thread_ID_secondPlay;
 
     current = find_fd_list(fd);
-    int terminate = 0;
-    char str[3];
 
     while (!terminate)
     {
@@ -277,7 +275,7 @@ void *read_first_play(void *sock_fd)
         {
             perror("read:");
         }
-        buffer[strlen(buffer)] = '\0';
+        buffer[strlen(buffer)]='\0';
         printf("%s\n", buffer);
         printf("number of players:%d\n", nr_players);
 
