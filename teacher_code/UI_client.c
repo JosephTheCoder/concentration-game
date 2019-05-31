@@ -53,18 +53,12 @@ void read_plays()
         
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
-<<<<<<< HEAD
-        buffer1[strlen(buffer1)] = '\0';
-        
-        // printf("strlen(buffer1)=%ld\n", strlen(buffer1));
-=======
         buffer[strlen(buffer)]='\0';
         if(n == -1)
         {
             perror("error reading play response");
             exit(-1);
         }
->>>>>>> f9e4890bd01061d029305d4286d5b0fa79b6fef5
 
         for (i = 0; i < strlen(buffer1) - 1; i++)
         {
