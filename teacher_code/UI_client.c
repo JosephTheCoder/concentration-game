@@ -67,17 +67,16 @@ void read_plays()
     int color[3];
 
   
-
-
     // Receive response from server
     while (!terminate)
     {
         cnt = 0;
         n = 0;
-
+        
+        printf("waiting play response\n");
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
-        buffer1[strlen(buffer1)] = '\0';
+        buffer1[strlen(buffer1)-1] = '\0';
         printf("strlen(buffer1)=%ld\n", strlen(buffer1));
 
         for (i = 0; i < strlen(buffer1) - 1; i++)
@@ -346,8 +345,11 @@ int main(int argc, char *argv[])
     /* Start game (copy from memory-single) */
     pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL);
 
+<<<<<<< HEAD
     //pthread_join(thread_ID_read_sdl_events, NULL);
 
+=======
+>>>>>>> 59079d7d07264ac3449babe48c2cb7e473cbab48
     read_plays();
 
     printf("fim\n");

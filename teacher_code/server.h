@@ -12,7 +12,7 @@
 #include <netdb.h>
 #include <pthread.h>
 
-#define CONCENTRATION_GAME_PORT 3014
+#define CONCENTRATION_GAME_PORT 3015
 #define BUFFER_SIZE 128
 
 typedef struct player{
@@ -24,6 +24,7 @@ typedef struct player{
 } player_t;
 
 int dim;
+int nr_players = 0; // indica o numero DE jogadores
 
 int  translate_i_to_x();
 int  translate_i_to_y();
