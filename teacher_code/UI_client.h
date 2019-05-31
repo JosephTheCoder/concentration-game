@@ -1,5 +1,5 @@
 
-#define CONCENTRATION_GAME_PORT 3015
+#define CONCENTRATION_GAME_PORT 3022
 
 #include <stdlib.h>
 #include <stdio.h>

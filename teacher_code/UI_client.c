@@ -45,7 +45,6 @@ void read_plays()
     char str_play[3];
     int color[3];
 
-  
     // Receive response from server
     while (!done)
     {
@@ -55,7 +54,7 @@ void read_plays()
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
         buffer[strlen(buffer)]='\0';
-        if (n == -1)
+        if(n == -1)
         {
             perror("error reading play response");
             exit(-1);
@@ -94,16 +93,23 @@ void read_plays()
         }
 
         // Enquanto ainda ha mensagens para ler no buffer1
-        while(cnt>-1){
-
+        while (cnt > -1)
+        {
             sscanf(buffer, "%d", &code);
             printf("buffer recebido no read plays: %s\n", buffer);
+            printf("code: %d\n", code);
+
+            char *pch;
 
             // Winner or Looser
             if (code == 3) // se algum jogador ganha
             {
-                while (sscanf(buffer, "%d ", &winner) == 1)
+                pch = strtok(buffer, " ");
+                while (pch != NULL)
                 {
+                    pch = strtok(NULL, " ");
+                    sscanf(pch, "%d", &winner);
+
                     if (winner == player_number)
                     {
                         printf("Player %d - You won! :)\n", player_number);
@@ -161,7 +167,6 @@ void read_plays()
     }
 }
 
-
 /***********************************************************************************
  * read_board()
  * 
@@ -178,12 +183,12 @@ void read_board()
     char buffer[BUFFER_SIZE];
  
 
-    // recebe todos os dados da board 
+    // recebe todos os dados da board
     while (strcmp(buffer, "board_sent") != 0)
     {
         memset(buffer, 0, BUFFER_SIZE);
-        n = read(sock_fd, buffer, BUFFER_SIZE);
-        buffer[strlen(buffer)]='\0';
+        n = read(sock_fd, buffer, sizeof(buffer));
+        buffer[sizeof(buffer)]='\0';
 
         if (n == -1)
         {
@@ -201,7 +206,6 @@ void read_board()
         }
     }
 }
-
 
 /***********************************************************************************
  * read_sdl_events()
@@ -254,8 +258,6 @@ void *read_sdl_events()
     }
     pthread_exit(NULL);
 }
-
-
 
 /***********************************************************************************
  * read_sdl_events()

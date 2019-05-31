@@ -168,13 +168,19 @@ void create_winners_payload(char *buffer)
 
     int biggest_nr_points = 0;
 
-    sprintf(buffer, "3 "); // insert code
-    
+    sprintf(buffer, "3"); // insert code
+    strcat(buffer, " ");
+
+    char number[3];
+
     while(current != NULL)
     {
+        printf("player %d points: %d\n", current->number, current->nr_points);
         if (current->nr_points >= biggest_nr_points)
         {
-            sprintf(buffer, "%d", current->number);
+            sprintf(number, "%d", current->number);
+            strcat(buffer, number);
+            strcat(buffer, " ");
             biggest_nr_points = current->nr_points;
         }
 
@@ -190,10 +196,11 @@ void broadcast_winners()
     char buffer[BUFFER_SIZE] = {'\0'};
 
     create_winners_payload(buffer);
-    strcat(buffer,"\n");
+    strcat(buffer, "\n");
 
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
+    exit(1);
 }
 
 /*****************************************************************************************+*****/
@@ -230,7 +237,7 @@ void *read_first_play(void *sock_fd)
         }else if(nr_players>1){
 
             sscanf(buffer, "%d %d\n", &x, &y);
-            printf("Buffer 1st play: %s\n", buffer);
+            printf("Buffer 1st play coMming from Player %d: %s\n", current->number, buffer);
             
             pthread_mutex_lock(&lock[x][y]);
             resp[fd] = board_play(x, y, fd, 0); // o terceiro argumento diz que nao é para fazer cancel da jogada
@@ -532,10 +539,7 @@ int main(int argc, char *argv[])
         if (nr_players == 2 && flag_inicio==1)
         {
             flag_inicio=0;
-            send_state = 1;
-        }
-        if (send_state == 1)
-        {
+            
             player_t *current = players_list_head;
 
             while (current != NULL)
@@ -544,6 +548,12 @@ int main(int argc, char *argv[])
                 current = current->next;
             }
         }
+
+        else if (nr_players > 2)
+        {
+            send_state_board(new_fd, dim);
+        }
+        
         pthread_create(&thread_ID, NULL, read_first_play, (void *)&new_fd);
     }
 
