@@ -103,7 +103,8 @@ void read_plays()
             {
                 while (sscanf(buffer, "%d%n", &winner, &offset) > 0)
                 {
-                    if (winner == player_number && iteration > 0)
+                    printf("winner: %d\n", winner);
+                    if (winner == player_number)
                     {
                         printf("Player %d - You won! :)\n", player_number);
                         won = 1;
@@ -118,10 +119,7 @@ void read_plays()
                 {
                     printf("Player %d - You lost! :(\n", player_number);
                 }
-
-                printf("done before: %d\n", done);
                 done = 1;
-                printf("done after: %d\n", done);
             }
 
             // turn card down
