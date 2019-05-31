@@ -31,12 +31,7 @@ typedef struct playable_place{
 
 #define SEND_PLAY 1
 #define WAITING_RESPONSE 2
-
-#define SEND_FIRST_PLAY 1
-#define SEND_SECOND_PLAY 2
-#define WAITING_FIRST_PLAY_RESPONSE 3
-#define WAITING_SECOND_PLAY_RESPONSE 4
-#define IDLE 5
+#define IDLE 3
 
 #define MAX_POSITIONS_IN_MEMORY 6
 
@@ -64,7 +59,7 @@ int write_payload(char *, int);
 void read_plays();
 void read_board();
 void *read_sdl_events();
-void *generate_first_play(void *arg);
+void *generate_first_play();
 void save_playable_position(int *new_position);
 void remove_playable_position(int *position);
 playable_place *get_playable_position(int index);

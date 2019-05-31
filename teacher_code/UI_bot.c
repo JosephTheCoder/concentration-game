@@ -28,11 +28,7 @@ void read_plays()
     char str_play[3];
     int color[3];
 
-    int position_index;
     int play_origin;
-
-    memory_place *position_in_memory = NULL;
-    playable_place *random_place = NULL;
 
     int winner;
 
@@ -166,9 +162,9 @@ void *read_sdl_events()
     pthread_exit(NULL);
 }
 
-void *generate_first_play(void *arg)
+void *generate_first_play()
 {
-    int dim = *((int *)arg);
+    int position_index;
     char buffer[BUFFER_SIZE] = {'\0'};
 
     playable_place *random_place;
@@ -177,8 +173,9 @@ void *generate_first_play(void *arg)
     {
         if (bot_status == SEND_PLAY)
         {
-            random_place->position[0] = rand() % dim;
-            random_place->position[1] = rand() % dim;
+            position_index = rand() % nr_playable_positions;
+
+            random_place = get_playable_position(position_index);
 
             memset(buffer, 0, BUFFER_SIZE);
             sprintf(buffer, "%d %d", random_place->position[0], random_place->position[1]);
@@ -245,48 +242,6 @@ playable_place *get_playable_position(int index)
     }
 
     return current;
-}
-
-void save_in_memory(char *letters, int *position)
-{
-    // entra na cabeça, apaga a ultima
-    memory_place *new_place = (memory_place *)malloc(sizeof(memory_place));
-
-    new_place->next = bot_memory;
-    new_place->position[0] = position[0];
-    new_place->position[1] = position[1];
-
-    bot_memory = new_place;
-    nr_memory_positions++;
-
-    // if max memory has been reached, deletes oldest position
-    if (nr_memory_positions > MAX_POSITIONS_IN_MEMORY)
-    {
-        memory_place *second_last = bot_memory;
-
-        while (second_last->next->next != NULL)
-            second_last = second_last->next;
-
-        free(second_last->next);
-        second_last->next = NULL;
-
-        nr_memory_positions--;
-    }
-}
-
-memory_place *find_relative_in_memory(char *letters)
-{
-    memory_place *current = bot_memory;
-
-    while (current->next != NULL)
-    {
-        if (current->v[0] == letters[0] && current->v[1] == letters[1] && current->v[2] == letters[2])
-            return current;
-        else
-            current = current->next;
-    }
-
-    return NULL;
 }
 
 int main(int argc, char *argv[])
@@ -359,7 +314,7 @@ int main(int argc, char *argv[])
     pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL); // change this cause function only reads SDL_QUIT
 
     bot_status = SEND_PLAY;
-    pthread_create(&thread_ID_generate_plays, NULL, generate_first_play, (void *)&dim);
+    pthread_create(&thread_ID_generate_plays, NULL, generate_first_play, NULL);
 
     read_plays();
 
