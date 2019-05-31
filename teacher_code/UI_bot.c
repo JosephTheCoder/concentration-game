@@ -33,7 +33,7 @@ int write_payload(char *payload, int fd)
  * ********************************************************************************/
 void read_plays()
 {
-    char *pch;
+   
     char buffer1[BUFFER_SIZE] = {'\0'};
     char buffer[BUFFER_SIZE] = {'\0'};
     char rest[BUFFER_SIZE] = {'\0'};
@@ -43,8 +43,6 @@ void read_plays()
     int color[3]={0};
     int play_origin=0;
     int code = 0;
-    int winner=0;
-    int won = 0;
     int cnt=0;
     int n=0, i=0;
 

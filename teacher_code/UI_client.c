@@ -57,7 +57,6 @@ void read_plays()
             break;
         }
         buffer1[strlen(buffer1)]='\0';
-
         for (i = 0; i < strlen(buffer1) - 1; i++)
         {
             if (buffer1[i] == '\n')
