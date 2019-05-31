@@ -178,10 +178,20 @@ void create_winners_payload(char *buffer)
         printf("player %d points: %d\n", current->number, current->nr_points);
         if (current->nr_points >= biggest_nr_points)
         {
+            biggest_nr_points = current->nr_points;
+        }
+        current = current->next;
+    }
+
+    current = players_list_head;
+
+    while(current != NULL)
+    {
+        if (current->nr_points == biggest_nr_points)
+        {
             sprintf(number, "%d", current->number);
             strcat(buffer, number);
             strcat(buffer, " ");
-            biggest_nr_points = current->nr_points;
         }
         current = current->next;
     }
