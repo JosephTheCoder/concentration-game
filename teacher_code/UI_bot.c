@@ -11,7 +11,7 @@
 int write_payload(char *payload, int fd)
 {
     int written = 0;
-    int n;
+    int n=0;
 
     while (written < strlen(payload))
     {
@@ -21,7 +21,6 @@ int write_payload(char *payload, int fd)
         }
         written += n;
     }
-
     return written;
 }
 
@@ -101,33 +100,16 @@ void read_plays()
             printf("buffer recebido no read plays: %s\n", buffer);
 
             // receives WINNER signal
-            if (code == 3)
+             if (code == 3) // se algum jogador ganha
             {
-                if (code == 3)
-                {
-                    pch = strtok(buffer, " ");
-                    while (pch != NULL)
-                    {
-                        pch = strtok(NULL, " ");
-                        sscanf(pch, "%d", &winner);
-
-                        if (winner == player_number)
-                        {
-                            printf("Player %d - You won! :)\n", player_number);
-                            won = 1;
-                        }
-                    }
-
-                    if (won == 0)
-                    {
-                        printf("Player %d - You lost! :(\n", player_number);
-                    }
-                    printf("end before: %d\n", end);
-                    end=1;
-                    printf("end after: %d\n", end);
-                }
+                printf("Player %d - You WON! :)\n", player_number);
+                end = 1;
             }
-
+            else if (code == 5)
+            {
+                printf("Player %d - You LOST... :(\n", player_number);
+                end = 1;
+            }
             // receives signal to turn card DOWN
             else if (code == -1)
             {

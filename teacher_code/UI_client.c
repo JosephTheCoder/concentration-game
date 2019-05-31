@@ -33,11 +33,8 @@ int write_payload(char *payload, int fd)
  * *********************************************************************************/
 void read_plays()
 {   char *p;
-    char *pch;
     int n=0, i=0, cnt=0;
-    int won = 0;
     int code = 0;
-    int winner;
     int play_origin;
     int play_x, play_y;
     char buffer1[BUFFER_SIZE] = {'\0'};
@@ -48,7 +45,7 @@ void read_plays()
 
     
     // Receive response from server
-    while (done==0)
+    while (done == 0)
     {
         cnt = 0;
         n = 0;
@@ -77,8 +74,8 @@ void read_plays()
         }
         else if (cnt > 0)
         {
-            sscanf(buffer1, "%[^,]s,", buffer);     
-            for (p = buffer1; p < buffer1+strlen(buffer1); p++)
+            sscanf(buffer1, "%[^,]s,", buffer);
+            for (p = buffer1; p < buffer1 + strlen(buffer1); p++)
             {
                 if (*p == ',')
                 {
@@ -100,26 +97,14 @@ void read_plays()
             // Winner or Looser
             if (code == 3) // se algum jogador ganha
             {
-                pch = strtok(buffer, " ");
-                while (pch != NULL)
-                {
-                    pch = strtok(NULL, " ");
-                    sscanf(pch, "%d", &winner);
+                printf("Player %d - You WON! :)\n", player_number);
+                done = 1;
+            }
 
-                    if (winner == player_number)
-                    {
-                        printf("Player %d - You won! :)\n", player_number);
-                        won = 1;
-                    }
-                }
-
-                if (won == 0)
-                {
-                    printf("Player %d - You lost! :(\n", player_number);
-                }
-                printf("done before: %d\n", done);
-                done=1;
-                printf("done after: %d\n", done);
+            else if (code == 5)
+            {
+                printf("Player %d - You LOST... :(\n", player_number);
+                done = 1;
             }
 
             // turn card down
@@ -253,7 +238,6 @@ void *read_sdl_events()
         }
     }
    
-    printf("cheguei aqui1\n");
     return(NULL);
   }
 

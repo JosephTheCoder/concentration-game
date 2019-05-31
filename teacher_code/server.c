@@ -8,7 +8,6 @@ play_response resp[100];
 pthread_mutex_t **lock;
 player_t *players_list_head = NULL;
 
-
 /***********************************************************************************************
  * 
  * 
@@ -34,7 +33,7 @@ player_t *find_fd_list(int fd)
 void update_cell_color(int x, int y, int r, int g, int b, int state)
 {
     int i = linear_conv(x, y);
-    board[i].state=state;
+    board[i].state = state;
     board[i].color[0] = r;
     board[i].color[1] = g;
     board[i].color[2] = b;
@@ -58,7 +57,6 @@ int *random_color()
 
     return color;
 }
-
 
 /***********************************************************************************************
  * 
@@ -84,7 +82,6 @@ int write_payload(char *payload, int fd)
     return written;
 }
 
-
 /***********************************************************************************************
  * 
  * 
@@ -93,9 +90,9 @@ int write_payload(char *payload, int fd)
  * *********************************************************************************************/
 void *read_second_play(void *sock_fd)
 {
-    
+
     int fd = *((int *)sock_fd);
-    int x = 0, y = 0, rv=0;
+    int x = 0, y = 0, rv = 0;
     char buffer[BUFFER_SIZE] = {'\0'};
 
     fd_set set;
@@ -104,37 +101,41 @@ void *read_second_play(void *sock_fd)
     timeout.tv_usec = 0;
     FD_ZERO(&set); /* clear the set */
     FD_SET(fd, &set);
-    rv=select(fd+1, &set, NULL,NULL, &timeout); 
-    if(rv<0) 
+    rv = select(fd + 1, &set, NULL, NULL, &timeout);
+    if (rv < 0)
     {
         perror("select\n"); /* an error accured */
-    }else if(rv==0)
+    }
+    else if (rv == 0)
     {
         resp[fd] = board_play(x, y, fd, 1);
         printf("timeout\n"); /* a timeout occured */
-    }else{
-       read(fd, buffer, sizeof(buffer));
+    }
+    else
+    {
+        read(fd, buffer, sizeof(buffer));
         if (strcmp(buffer, "exiting") == 0)
         {
             resp[fd].code = 4;
-        }else{
+        }
+        else
+        {
 
-        sscanf(buffer, "%d %d\n", &x, &y);
-        printf("Buffer 2nd play: %s\n", buffer);
-        pthread_mutex_lock(&lock[x][y]);
-        resp[fd] = board_play(x, y, fd, 0); //terceiro argumento diz que está tudo OK
+            sscanf(buffer, "%d %d\n", &x, &y);
+            printf("Buffer 2nd play: %s\n", buffer);
+            pthread_mutex_lock(&lock[x][y]);
+            resp[fd] = board_play(x, y, fd, 0); //terceiro argumento diz que está tudo OK
 
-        printf("code play 2: %d\n", resp[fd].code);
+            printf("code play 2: %d\n", resp[fd].code);
 
-        if (resp[fd].code == 0)
-            pthread_mutex_unlock(&lock[x][y]);
+            if (resp[fd].code == 0)
+                pthread_mutex_unlock(&lock[x][y]);
         }
     }
-     printf("saí do select\n");
-    
+    printf("saí do select\n");
+
     pthread_exit(NULL);
 }
-
 
 /***********************************************************************************************
  * 
@@ -159,7 +160,6 @@ void *send_play_to_all(void *buffer) //arg = string com posição jogada
     pthread_exit(NULL);
 }
 
-
 /***********************************************************************************************
  * 
  * 
@@ -172,12 +172,11 @@ void broadcast_up(int origin_player, int x, int y, char *str, int *color)
     char buffer[BUFFER_SIZE] = {'\0'};
 
     sprintf(buffer, "1 %d %d %d %s %d %d %d", origin_player, x, y, str, color[0], color[1], color[2]);
-    strcat(buffer,"\n");
+    strcat(buffer, "\n");
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
     pthread_join(thread_ID_sendPlays, NULL);
 }
-
 
 /***********************************************************************************************
  * 
@@ -192,58 +191,11 @@ void broadcast_down(int origin_player, int x, int y, char *str)
 
     // memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "-1 %d %d %d %s", origin_player, x, y, str);
-    strcat(buffer,"\n");
+    strcat(buffer, "\n");
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
     pthread_join(thread_ID_sendPlays, NULL);
 }
-
-
-/***********************************************************************************************
- * 
- * 
- * 
- * 
- * *********************************************************************************************/
-char *create_winners_payload()
-{
-    char *buffer = (char *) malloc(BUFFER_SIZE*sizeof(char));
-    player_t *current = players_list_head;
-
-    int biggest_nr_points = 0;
-
-    strcpy(buffer, "3"); // insert code
-    strcat(buffer, " ");
-
-    char number[3];
-
-    while(current != NULL)
-    {
-        printf("player %d points: %d\n", current->number, current->nr_points);
-        if (current->nr_points >= biggest_nr_points)
-        {
-            biggest_nr_points = current->nr_points;
-        }
-        current = current->next;
-    }
-
-    current = players_list_head;
-
-    while(current != NULL)
-    {
-        if (current->nr_points == biggest_nr_points)
-        {
-            sprintf(number, "%d", current->number);
-            strcat(buffer, number);
-            strcat(buffer, " ");
-        }
-        current = current->next;
-    }
-    printf("winners buffer: %s\n", buffer);
-    strcat(buffer, "\n");
-    return buffer;
-}
-
 
 /***********************************************************************************************
  * 
@@ -253,11 +205,45 @@ char *create_winners_payload()
  * *********************************************************************************************/
 void broadcast_winners()
 {
-    pthread_t thread_ID_sendPlays;
-    char *buffer = create_winners_payload();
+    char buffer[BUFFER_SIZE] = {'\0'};
 
-    // construção buffer
-    pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
+    char won[2] = "3";
+    char lost[2] = "5";
+
+    player_t *current = players_list_head;
+
+    int biggest_nr_points = 0;
+
+    while (current != NULL)
+    {
+        printf("player %d points: %d\n", current->number, current->nr_points);
+
+        if (current->nr_points >= biggest_nr_points)
+            biggest_nr_points = current->nr_points;
+
+        current = current->next;
+    }
+
+    current = players_list_head;
+
+    while (current != NULL)
+    {
+        if (current->nr_points == biggest_nr_points)
+        {
+            memset(buffer, 0, BUFFER_SIZE);
+            strcat(buffer, won);
+            write_payload(buffer, current->fd);
+        }
+
+        else
+        {
+            memset(buffer, 0, BUFFER_SIZE);
+            strcat(buffer, lost);
+            write_payload(buffer, current->fd);
+        }
+
+        current = current->next;
+    }
 }
 
 /***********************************************************************************************
@@ -282,14 +268,14 @@ void *read_first_play(void *sock_fd)
 
     while (!terminate)
     {
-        
+
         memset(buffer, 0, BUFFER_SIZE);
-        n=read(fd, buffer, sizeof(buffer));
-        if(n==-1){
+        n = read(fd, buffer, sizeof(buffer));
+        if (n == -1)
+        {
             perror("read:");
         }
         buffer[strlen(buffer)]='\0';
-        
         printf("%s\n", buffer);
         printf("number of players:%d\n", nr_players);
 
@@ -299,14 +285,15 @@ void *read_first_play(void *sock_fd)
             printf("Player %d exited!\n", current->number);
             remove_from_list(current->number);
             close(fd);
-            terminate=1;
-             break;
-            
-        }else if(nr_players>1){
+            terminate = 1;
+            break;
+        }
+        else if (nr_players > 1)
+        {
 
             sscanf(buffer, "%d %d\n", &x, &y);
             printf("Buffer 1st play coMming from Player %d: %s\n", current->number, buffer);
-            
+
             pthread_mutex_lock(&lock[x][y]);
             resp[fd] = board_play(x, y, fd, 0); // o terceiro argumento diz que nao é para fazer cancel da jogada
             printf("resp[fd] first play: %d\n", resp[fd].code);
@@ -319,11 +306,11 @@ void *read_first_play(void *sock_fd)
 
             case 1:
                 /* first play */
-                resp[fd].code=0;
+                resp[fd].code = 0;
                 update_cell_color(resp[fd].play1[0], resp[fd].play1[1], current->color[0], current->color[1], current->color[2], 1);
                 broadcast_up(current->number, resp[fd].play1[0], resp[fd].play1[1], resp[fd].str_play1, current->color);
                 pthread_mutex_unlock(&lock[resp[fd].play1[0]][resp[fd].play1[1]]);
-   
+
                 str[0] = resp[fd].str_play1[0];
                 str[1] = resp[fd].str_play1[1];
                 str[2] = resp[fd].str_play1[2];
@@ -350,12 +337,11 @@ void *read_first_play(void *sock_fd)
 
                     update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2], 1);
                     broadcast_up(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
-                    
+
                     current->nr_points++;
-                    
+
                     pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
-                     break;
-                              
+                    break;
 
                 case -2:
 
@@ -373,7 +359,6 @@ void *read_first_play(void *sock_fd)
                     update_cell_color(resp[fd].play2[0], resp[fd].play2[1], 255, 255, 255, 0);
                     break;
 
-
                 case 3:
                     //envia a todos a info para virar a carta e que o jogador x ganhou
                     update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2], 1);
@@ -381,7 +366,7 @@ void *read_first_play(void *sock_fd)
                     pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
                     current->nr_points++;
                     broadcast_winners();
-                    terminate=1;
+                    terminate = 1;
                     pthread_exit(NULL);
                     break;
 
@@ -390,18 +375,17 @@ void *read_first_play(void *sock_fd)
                     update_cell_color(resp[fd].play1[0], resp[fd].play1[1], 255, 255, 255, 0);
                     broadcast_down(current->number, resp[fd].play1[0], resp[fd].play1[1], str);
                     printf("Player %d exited!", current->number);
-                    remove_from_list( current->number); 
+                    remove_from_list(current->number);
                     board_play(x, y, fd, 1);
                     close(fd);
-                    terminate=1;
+                    terminate = 1;
                     break;
-                 }
+                }
             }
         }
     }
     pthread_exit(NULL);
 }
-
 
 /***********************************************************************************************
  * 
@@ -415,7 +399,6 @@ int translate_i_to_x(int i, int dim_board)
     return x;
 }
 
-
 /***********************************************************************************************
  * 
  * 
@@ -427,7 +410,6 @@ int translate_i_to_y(int i, int dim_board)
     int y = i / dim_board;
     return y;
 }
-
 
 /***********************************************************************************************
  * 
@@ -475,8 +457,6 @@ void send_state_board(int fd, int dim_board)
     write_payload(buffer, fd);
 }
 
-
-
 /***********************************************************************************************
  * 
  * 
@@ -505,8 +485,6 @@ void push_to_list(player_t *head, int *color, int fd, int player_number)
     current->next->next = NULL;
 }
 
-
-
 /***********************************************************************************************
  * 
  * 
@@ -516,7 +494,7 @@ void push_to_list(player_t *head, int *color, int fd, int player_number)
 int remove_from_list(int player_number)
 {
     player_t *temp = players_list_head;
-    
+
     player_t *prev = NULL;
 
     while (temp->number != player_number && temp->next != NULL)
@@ -543,7 +521,6 @@ int remove_from_list(int player_number)
     return -1;
 }
 
-
 /***********************************************************************************************
  * 
  * 
@@ -552,21 +529,19 @@ int remove_from_list(int player_number)
  * *********************************************************************************************/
 int main(int argc, char *argv[])
 {
-    int *color;     // aux para escolher a cor definida para os jogadores
-    int i = 0;      // variavel de contagem
-    int new_fd;     // fd dos clientes
-    int flag_inicio=1;  // ver se é a primeira inicialização do jogo
+    int *color;          // aux para escolher a cor definida para os jogadores
+    int i = 0;           // variavel de contagem
+    int new_fd;          // fd dos clientes
+    int flag_inicio = 1; // ver se é a primeira inicialização do jogo
     //int send_state = 0;  // flag que determina se envia board para os jogadores
-    int numero_jogador=0;   // indica o numero DO jogador
+    int numero_jogador = 0; // indica o numero DO jogador
     pthread_t thread_ID;    // id da thread que lê as jogadas
     socklen_t size_addr;
-    struct sockaddr_in local_addr, client_addr;   // enderenços dos clientes
-    char buffer[BUFFER_SIZE] = {'\0'};    // buffer das mensagens recebidas pelo serv quando um cliente se liga
-    
+    struct sockaddr_in local_addr, client_addr; // enderenços dos clientes
+    char buffer[BUFFER_SIZE] = {'\0'};          // buffer das mensagens recebidas pelo serv quando um cliente se liga
 
     srand(time(NULL));
 
-   
     if (argc != 2 || sscanf(argv[1], "%d", &dim) == 0 || dim > 26 || dim < 1 || dim % 2 != 0)
     {
         // se a dimensão da board for impar ou se tiver dimensao maior que 26 ou menor que 2
@@ -577,7 +552,7 @@ int main(int argc, char *argv[])
     init_board(dim); // inicializa a board
 
     // aloca mutex_lock segundo as dimensoes da board
-    lock = (pthread_mutex_t **)malloc(dim * sizeof(pthread_mutex_t *)); 
+    lock = (pthread_mutex_t **)malloc(dim * sizeof(pthread_mutex_t *));
     for (i = 0; i < dim; i++)
     {
         lock[i] = (pthread_mutex_t *)malloc(dim * sizeof(pthread_mutex_t));
@@ -618,14 +593,14 @@ int main(int argc, char *argv[])
             exit(-1);
         }
 
-        nr_players++;   // indica o numero DE jogadores
+        nr_players++;     // indica o numero DE jogadores
         numero_jogador++; // indica o numero DO jogador
 
         printf("Player %d connected!\n", numero_jogador);
         color = random_color(); // escolhe uma cor random para associar a esse jogador
 
         // Se for a primeira ver que o jogo esta a ser iniciado, cria a lista de jogadores
-        if (nr_players == 1 && flag_inicio==1) 
+        if (nr_players == 1 && flag_inicio == 1)
         {
             players_list_head = (player_t *)malloc(sizeof(player_t));
             if (players_list_head == NULL)
@@ -638,7 +613,6 @@ int main(int argc, char *argv[])
             players_list_head->color[2] = color[2];
             players_list_head->nr_points = 0;
             players_list_head->next = NULL;
-            
         }
         else //se ja ha um jogador entao adicionar jogador à lista
         {
@@ -650,10 +624,10 @@ int main(int argc, char *argv[])
         write_payload(buffer, new_fd);
 
         // só começa quando ha mais que dois jogadores
-        if (nr_players == 2 && flag_inicio==1)
+        if (nr_players == 2 && flag_inicio == 1)
         {
-            flag_inicio=0;
-            
+            flag_inicio = 0;
+
             player_t *current = players_list_head;
 
             while (current != NULL)
@@ -667,7 +641,7 @@ int main(int argc, char *argv[])
         {
             send_state_board(new_fd, dim);
         }
-        
+
         pthread_create(&thread_ID, NULL, read_first_play, (void *)&new_fd);
     }
 
