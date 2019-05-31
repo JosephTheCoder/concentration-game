@@ -141,7 +141,7 @@ void broadcast_up(int origin_player, int x, int y, char *str, int *color)
     char buffer[BUFFER_SIZE] = {'\0'};
 
     sprintf(buffer, "1 %d %d %d %s %d %d %d", origin_player, x, y, str, color[0], color[1], color[2]);
-
+    strcat(buffer,"\n");
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
     pthread_join(thread_ID_sendPlays, NULL);
@@ -156,7 +156,7 @@ void broadcast_down(int origin_player, int x, int y, char *str)
 
     // memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "-1 %d %d %d %s", origin_player, x, y, str);
-
+    strcat(buffer,"\n");
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
     pthread_join(thread_ID_sendPlays, NULL);
@@ -170,7 +170,7 @@ void broadcast_winner(int player, int x, int y, char *str, int *color)
     char buffer[BUFFER_SIZE] = {'\0'};
 
     sprintf(buffer, "3 %d %d %d %s %d %d %d", player, x, y, str, color[0], color[1], color[2]);
-
+     strcat(buffer,"\n");
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
 }
@@ -258,12 +258,12 @@ void *read_first_play(void *sock_fd)
 
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2], 1);
                 broadcast_up(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
+                pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
 
                 sleep(2);
 
                 // adiccionar str ao broadcast down
                 broadcast_down(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2);
-                pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
                 broadcast_down(current->number, resp[fd].play1[0], resp[fd].play1[1], str);
 
                 update_cell_color(resp[fd].play1[0], resp[fd].play1[1], 255, 255, 255, 0);

@@ -40,8 +40,9 @@ int write_payload(char *payload, int fd)
 void read_plays()
 {
     int code = 0;
+    char buffer1[BUFFER_SIZE] = {'\0'};
     char buffer[BUFFER_SIZE] = {'\0'};
-
+    char resto[BUFFER_SIZE] = {'\0'};
     int play_x, play_y;
     char str_play[3];
     int color[3];
@@ -50,52 +51,97 @@ void read_plays()
 
     int play_origin;
 
-    int n;
+    int n, i=0, cnt=0;
 
     // Receive response from server
     while (!terminate)
     {
+        cnt=0;
         n = 0;
-        memset(buffer, 0, BUFFER_SIZE);
-        n = read(sock_fd, buffer, BUFFER_SIZE);
 
-        printf("Received play response with %d bytes: %s\n", n, buffer);
+
+        memset(buffer1, 0, BUFFER_SIZE);
+        n = read(sock_fd, buffer1, BUFFER_SIZE);
+        buffer1[strlen(buffer1)]='\0';
+        printf("strlen(buffer1)=%ld\n", strlen(buffer1));
+
+        for(i=0; i<strlen(buffer1)-1; i++)
+        {
+            if(buffer1[i]=='\n')
+            {
+                buffer1[i]=',';
+                cnt+=1;
+            }
+        }
+        
+        printf("Received play response with %d bytes: %s\n", n, buffer1);
+        printf("cnt: %d\n",cnt);
 
         if (n == -1)
         {
             perror("error reading play response");
             exit(-1);
         }
-
-        sscanf(buffer, "%d", &code);
-        printf("buffer recebido no read plays: %s\n",buffer);
-
-        if (code == 3)
-        {
-            sscanf(buffer, "3 %d %d %d %s %d %d %d", &winner, &play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
-            paint_card(play_x, play_y, color[0], color[1], color[2]);
-            write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
-            
-            printf("The winner is the Player %d!\n", winner);
-            break;
+        if(cnt==0){
+            sscanf(buffer1,"%[^\n]s\n", buffer);
+            printf("buffer: %s\n",buffer);
+        }else if(cnt>0){
+            printf("%d\n",sscanf(buffer1,"%[^,]s,", buffer));
+            char *p;
+            for(p=buffer1; i<strlen(buffer1); p++)
+            {
+                if(*p==',')
+                {
+                    p=p+1;
+                    break;
+                }
+            }
+            strcpy(resto, p);
+            printf("buffer: %s\n",buffer);
+            printf("resto: %s\n",resto);
         }
 
-        // turn card down
-        else if (code == -1)
-        {
-            sscanf(buffer, "-1 %d %d %d", &play_origin, &play_x, &play_y);
-            paint_card(play_x, play_y, background_color[0], background_color[1], background_color[2]);
-        }
 
-        // turn card up
-        else
-        {
-            sscanf(buffer, "1 %d %d %d %s %d %d %d", &play_origin, &play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
 
-            printf("Paint cell %d %d with the color %d %d %d\n", play_x, play_y, color[0], color[1], color[2]);
+        while(cnt>-1){
 
-            paint_card(play_x, play_y, color[0], color[1], color[2]);
-            write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
+            sscanf(buffer, "%d", &code);
+            printf("buffer recebido no read plays: %s\n",buffer);
+
+            if (code == 3)
+            {
+                sscanf(buffer, "3 %d %d %d %s %d %d %d", &winner, &play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
+                paint_card(play_x, play_y, color[0], color[1], color[2]);
+                write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
+                
+                printf("The winner is the Player %d!\n", winner);
+                break;
+            }
+
+            // turn card down
+            else if (code == -1)
+            {
+                sscanf(buffer, "-1 %d %d %d", &play_origin, &play_x, &play_y);
+                paint_card(play_x, play_y, background_color[0], background_color[1], background_color[2]);
+            }
+
+            // turn card up
+            else
+            {
+                sscanf(buffer, "1 %d %d %d %s %d %d %d", &play_origin, &play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
+
+                printf("Paint cell %d %d with the color %d %d %d\n", play_x, play_y, color[0], color[1], color[2]);
+
+                paint_card(play_x, play_y, color[0], color[1], color[2]);
+                write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
+            }
+        cnt--;
+
+        if(cnt==0)
+            sscanf(resto,"%[^\n]s\n", buffer);
+        else if(cnt>0)
+            sscanf(resto,"%[^,]s,%[^\n]s", buffer, resto);
+        
         }
     }
 }
