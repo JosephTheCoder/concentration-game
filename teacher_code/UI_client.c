@@ -344,8 +344,6 @@ int main(int argc, char *argv[])
     /* Start game (copy from memory-single) */
     pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL);
 
-    pthread_join(thread_ID_read_sdl_events, NULL);
-
     read_plays();
 
     printf("fim\n");

@@ -2,8 +2,7 @@ Sophie
 Recomeçar
 
 Ze
-exit - se so restar um jogador tem que se acabar o jogo
-Como ganhar o jogo? - e verificar se o player certo ganha
+exit - verificar lista
 
 Em cada jogador guardar numero de cartas certas
 No fim correr a lista, ver quais os jogadores com mais pontos
