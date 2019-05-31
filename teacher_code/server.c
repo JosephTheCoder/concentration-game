@@ -299,7 +299,7 @@ void *read_first_play(void *sock_fd)
         {
             //remove player from the list
             printf("Player %d exited!\n", current->number);
-            remove_from_list(players_list_head, current->number);
+            remove_from_list(current->number);
             close(fd);
             terminate=1;
              break;
@@ -392,7 +392,7 @@ void *read_first_play(void *sock_fd)
                     update_cell_color(resp[fd].play1[0], resp[fd].play1[1], 255, 255, 255, 0);
                     broadcast_down(current->number, resp[fd].play1[0], resp[fd].play1[1], str);
                     printf("Player %d exited!", current->number);
-                    remove_from_list(players_list_head, current->number); 
+                    remove_from_list( current->number); 
                     board_play(x, y, fd, 1);
                     close(fd);
                     terminate=1;
@@ -515,12 +515,9 @@ void push_to_list(player_t *head, int *color, int fd, int player_number)
  * 
  * 
  * *********************************************************************************************/
-int remove_from_list(player_t *head, int player_number)
+int remove_from_list(int player_number)
 {
-    if (!head)
-        return -1;
-
-    player_t *temp = head;
+    player_t *temp = players_list_head;
     
     player_t *prev = NULL;
 
@@ -538,7 +535,7 @@ int remove_from_list(player_t *head, int player_number)
         }
         else
         {
-            head = temp->next;
+            players_list_head = temp->next;
         }
         free(temp);
         nr_players--;
