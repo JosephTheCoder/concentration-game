@@ -4,9 +4,8 @@
 #include "server.h"
 
 #include <time.h>
-
-pthread_mutex_t **lock;
 play_response resp[100];
+pthread_mutex_t **lock;
 player_t *players_list_head = NULL;
 
 
@@ -271,6 +270,7 @@ void broadcast_winners()
 void *read_first_play(void *sock_fd)
 {
     int fd = *((int *)sock_fd);
+    int n=0;
     printf("fd: %d\n", fd);
 
     int x = 0, y = 0;
@@ -287,7 +287,10 @@ void *read_first_play(void *sock_fd)
     {
         
         memset(buffer, 0, BUFFER_SIZE);
-        read(fd, buffer, sizeof(buffer));
+        n=read(fd, buffer, sizeof(buffer));
+        if(n==-1){
+            perror("read:");
+        }
         buffer[strlen(buffer)]='\0';
         printf("%s\n", buffer);
         printf("number of players:%d\n", nr_players);
@@ -296,9 +299,10 @@ void *read_first_play(void *sock_fd)
         {
             //remove player from the list
             printf("Player %d exited!\n", current->number);
-            close(fd);
             remove_from_list(players_list_head, current->number);
-            break;
+            close(fd);
+            terminate=1;
+             break;
             
         }else if(nr_players>1){
 
@@ -387,10 +391,9 @@ void *read_first_play(void *sock_fd)
                     //remove player from the list
                     update_cell_color(resp[fd].play1[0], resp[fd].play1[1], 255, 255, 255, 0);
                     broadcast_down(current->number, resp[fd].play1[0], resp[fd].play1[1], str);
-
                     printf("Player %d exited!", current->number);
-
                     remove_from_list(players_list_head, current->number); 
+                    board_play(x, y, fd, 1);
                     close(fd);
                     terminate=1;
                     break;
