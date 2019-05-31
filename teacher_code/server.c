@@ -636,8 +636,7 @@ int main(int argc, char *argv[])
                 current = current->next;
             }
         }
-
-        else if (nr_players > 2)
+        else if (nr_players > 2 ||(nr_players == 2 && flag_inicio == 0))
         {
             send_state_board(new_fd, dim);
         }
