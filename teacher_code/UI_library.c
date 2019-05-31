@@ -8,6 +8,7 @@ int n_ronw_cols;
 		int col_width;
 SDL_Window* window = NULL;
 SDL_Renderer* renderer = NULL;
+TTF_Font * font;
 
 
 void write_card(int  board_x, int board_y, char * text, int r, int g, int b){
@@ -18,8 +19,6 @@ void write_card(int  board_x, int board_y, char * text, int r, int g, int b){
 	rect.w = col_width+1;
 	rect.h = row_height+1;
 
-	TTF_Font * font = TTF_OpenFont("arial.ttf", row_height);
-
 /* 	int text_x = board_x * col_width;
 	int text_y = board_y * row_height; */
 
@@ -29,9 +28,11 @@ void write_card(int  board_x, int board_y, char * text, int r, int g, int b){
 	SDL_Texture* Background_Tx = SDL_CreateTextureFromSurface(renderer, surface);
 	SDL_FreeSurface(surface); /* we got the texture now -> free surface */
 
-	SDL_Delay(50);
+	SDL_Delay(5);
 	SDL_RenderCopy(renderer, Background_Tx, NULL, &rect);
 	SDL_RenderPresent(renderer);
+
+	SDL_DestroyTexture(Background_Tx);
 }
 
 
@@ -70,25 +71,27 @@ void create_board_window(int width, int height,  int dim){
 	n_ronw_cols = dim;
 	row_height = height /n_ronw_cols;
 	col_width = width /n_ronw_cols;
-screen_width = n_ronw_cols * col_width +1;
-screen_height = n_ronw_cols *row_height +1;
+	screen_width = n_ronw_cols * col_width +1;
+	screen_height = n_ronw_cols *row_height +1;
+
+	font = TTF_OpenFont("arial.ttf", row_height);
 
 	if (SDL_CreateWindowAndRenderer(screen_width, screen_height, 0, &window, &renderer)  != 0) {
 		printf( "Window could not be created! SDL_Error: %s\n", SDL_GetError() );
 		exit(-1);
 	}
 
-
 	SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
 	SDL_RenderClear(renderer);
 
+	int i;
 
 	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-	for (int i = 0; i <n_ronw_cols+1; i++){
+	for (i = 0; i <n_ronw_cols+1; i++){
 		SDL_RenderDrawLine(renderer, 0, i*row_height, screen_width, i*row_height);
 	}
 
-	for (int i = 0; i <n_ronw_cols+1; i++){
+	for (i = 0; i <n_ronw_cols+1; i++){
 		SDL_RenderDrawLine(renderer, i*col_width, 0, i*col_width, screen_height);
 	}
 	SDL_RenderPresent(renderer);
@@ -101,4 +104,25 @@ void close_board_windows(){
 	if (window) {
 		SDL_DestroyWindow(window);
 	}
+}
+
+void reset_board(int width, int height,  int dim)
+{
+	SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+	SDL_RenderClear(renderer);
+
+	SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+
+	int i;
+	for (i = 0; i <n_ronw_cols+1; i++)
+	{
+		SDL_RenderDrawLine(renderer, 0, i*row_height, screen_width, i*row_height);
+	}
+
+	for (i = 0; i <n_ronw_cols+1; i++)
+	{
+		SDL_RenderDrawLine(renderer, i*col_width, 0, i*col_width, screen_height);
+	}
+	
+	SDL_RenderPresent(renderer);
 }
