@@ -69,7 +69,6 @@ void read_plays()
         if (cnt == 0)
         {
             sscanf(buffer1, "%[^\n]s\n", buffer);
-            printf("buffer: %s\n", buffer);
         }
         else if (cnt > 0)
         {
@@ -89,23 +88,26 @@ void read_plays()
         while (cnt > -1)
         {
             sscanf(buffer, "%d", &code);
-            printf("buffer recebido no read plays: %s\n", buffer);
-            printf("code: %d\n", code);
-
 
             // Winner or Looser
             if (code == 3) // se algum jogador ganha
             {
+                get_mouse_press = 0;
                 printf("Player %d - You WON! :)\n", player_number);
                 reset_board(300, 300, dim);
                 read_board();
+                sleep(10);
+                get_mouse_press = 1;
             }
 
             else if (code == 5)
             {
+                get_mouse_press = 0;
                 printf("Player %d - You LOST... :(\n", player_number);
                 reset_board(300, 300, dim);
                 read_board();
+                sleep(10);
+                get_mouse_press = 1;
             }
 
             // turn card down
@@ -119,8 +121,6 @@ void read_plays()
             else // se é para virar uma carta para cima
             {
                 sscanf(buffer, "1 %d %d %d %s %d %d %d", &play_origin, &play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
-
-                printf("Paint cell %d %d with the color %d %d %d\n", play_x, play_y, color[0], color[1], color[2]);
 
                 paint_card(play_x, play_y, color[0], color[1], color[2]);
                 write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
@@ -142,8 +142,6 @@ void read_plays()
                     }
                 }
                 strcpy(resto, p);
-                printf("buffer: %s\n", buffer);
-                printf("resto: %s\n", resto);
              }   
         
         }
@@ -181,7 +179,6 @@ void read_board()
         {
             sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play_x, &play_y);
 
-            printf("buffer: %s\n", buffer);
             paint_card(play_x, play_y, color[0], color[1], color[2]);
             write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]);
         }
@@ -222,9 +219,9 @@ void *read_sdl_events()
                 break;
             }
             case SDL_MOUSEBUTTONDOWN:
-            {   if(done==0)
+            {   if(done == 0 && get_mouse_press == 1)
                 {
-                     get_board_card(event.button.x, event.button.y, &board_x, &board_y);
+                    get_board_card(event.button.x, event.button.y, &board_x, &board_y);
                     if (board_x < dim && board_y < dim)
                     {  
                         // send play to server
@@ -322,7 +319,8 @@ int main(int argc, char *argv[])
     pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL); 
     // detecta as jogadas enviadas pelo servidor
     read_plays();
-    printf("fim\n");
+
+    close_board_windows();
 
     return 0;
 }
