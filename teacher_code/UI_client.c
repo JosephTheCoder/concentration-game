@@ -16,11 +16,10 @@
 
 #define BUFFER_SIZE 128
 
-int sock_fd = 0;  // sock_fd do servidor
-int dim , n = 0;  // dimensao da board e nº bytes msgs
+int sock_fd = 0; // sock_fd do servidor
+int dim, n = 0;  // dimensao da board e nº bytes msgs
 
 int terminate = 0; // acaba o jogo do jogador quando =1
-
 
 /***********************************************************************************
  * write_payload()
@@ -53,8 +52,8 @@ int write_payload(char *payload, int fd)
  * 
  * *********************************************************************************/
 void read_plays()
-{   
-    int n, i=0, cnt=0;
+{
+    int n, i = 0, cnt = 0;
     int won = 0;
     int code = 0;
     int winner;
@@ -66,17 +65,16 @@ void read_plays()
     char str_play[3];
     int color[3];
 
-  
     // Receive response from server
     while (!terminate)
     {
         cnt = 0;
         n = 0;
-        
+
         printf("waiting play response\n");
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
-        buffer1[strlen(buffer1)-1] = '\0';
+        buffer1[strlen(buffer1) - 1] = '\0';
         printf("strlen(buffer1)=%ld\n", strlen(buffer1));
 
         for (i = 0; i < strlen(buffer1) - 1; i++)
@@ -119,7 +117,8 @@ void read_plays()
         }
 
         // Enquanto ainda ha mensagens para ler no buffer1
-        while(cnt>-1){
+        while (cnt > -1)
+        {
 
             sscanf(buffer, "%d", &code);
             printf("buffer recebido no read plays: %s\n", buffer);
@@ -164,15 +163,13 @@ void read_plays()
             // menos uma mensagem para ler do buffer
             cnt--;
 
-            if(cnt==0) // se ja só exite uma mensagem
-                sscanf(resto,"%[^\n]s\n", buffer);
-            else if(cnt>0) // se existe mais do que uma mensagem para ler
-                sscanf(resto,"%[^,]s,%[^\n]s", buffer, resto);
-        
+            if (cnt == 0) // se ja só exite uma mensagem
+                sscanf(resto, "%[^\n]s\n", buffer);
+            else if (cnt > 0) // se existe mais do que uma mensagem para ler
+                sscanf(resto, "%[^,]s,%[^\n]s", buffer, resto);
         }
     }
 }
-
 
 /***********************************************************************************
  * read_board()
@@ -189,7 +186,7 @@ void read_board()
     char buffer[BUFFER_SIZE];
     int n;
 
-    // recebe todos os dados da board 
+    // recebe todos os dados da board
     while (strcmp(buffer, "board_sent") != 0)
     {
         memset(buffer, 0, BUFFER_SIZE);
@@ -212,7 +209,6 @@ void read_board()
         }
     }
 }
-
 
 /***********************************************************************************
  * read_sdl_events()
@@ -241,8 +237,8 @@ void *read_sdl_events()
                 memset(buffer, 0, BUFFER_SIZE);
                 strcpy(buffer, "exiting");
                 printf("Im leaving the game!\n");
-                write_payload(buffer, sock_fd);   
-                close_board_windows();       
+                write_payload(buffer, sock_fd);
+                close_board_windows();
                 terminate = 1;
                 exit(0);
                 //pthread_exit(NULL);
@@ -266,8 +262,6 @@ void *read_sdl_events()
     }
     pthread_exit(NULL);
 }
-
-
 
 /***********************************************************************************
  * read_sdl_events()
