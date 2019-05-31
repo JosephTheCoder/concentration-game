@@ -75,7 +75,8 @@ void read_plays()
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
         buffer1[strlen(buffer1) - 1] = '\0';
-        printf("strlen(buffer1)=%ld\n", strlen(buffer1));
+        
+        // printf("strlen(buffer1)=%ld\n", strlen(buffer1));
 
         for (i = 0; i < strlen(buffer1) - 1; i++)
         {
@@ -141,16 +142,6 @@ void read_plays()
                     }
                 }
 
-                // while (sscanf(buffer, "%d ", &winner) == 1)
-                // {
-                //     printf("winner: %d\n", winner);
-                //     if (winner == player_number)
-                //     {
-                //         printf("Player %d - You won! :)\n", player_number);
-                //         won = 1;
-                //     }
-                // }
-
                 if (won == 0)
                 {
                     printf("Player %d - You lost! :(\n", player_number);
@@ -207,7 +198,7 @@ void read_board()
     {
         memset(buffer, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer, sizeof(buffer));
-        // buffer[sizeof(buffer)]='\0';
+        buffer[sizeof(buffer)]='\0';
 
         if (n == -1)
         {

@@ -242,7 +242,7 @@ void *read_first_play(void *sock_fd)
         }else if(nr_players>1){
 
             sscanf(buffer, "%d %d\n", &x, &y);
-            printf("Buffer 1st play: %s\n", buffer);
+            printf("Buffer 1st play coMming from Player %d: %s\n", current->number, buffer);
             
             pthread_mutex_lock(&lock[x][y]);
             resp[fd] = board_play(x, y, fd, 0); // o terceiro argumento diz que nao é para fazer cancel da jogada
