@@ -196,12 +196,14 @@ void *read_first_play(void *sock_fd)
         memset(buffer, 0, BUFFER_SIZE);
         read(fd, buffer, sizeof(buffer));
         //buffer[sizeof(buffer)] = '\0';
-
+        printf("%s\n", buffer);
         if (strcmp(buffer, "exiting") == 0)
         {
             //remove player from the list
-            printf("Player %d exited!", current->number);
+            printf("Player %d exited!\n", current->number);
             remove_from_list(players_list_head, current->number);
+
+            pthread_exit(NULL);
             terminate = 1;
             break;
         }
@@ -282,7 +284,6 @@ void *read_first_play(void *sock_fd)
                 broadcast_winner(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
                 pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
                 
-                
                 break;
 
             case 4:
@@ -290,6 +291,8 @@ void *read_first_play(void *sock_fd)
                 printf("Player %d exited!", current->number);
                 remove_from_list(players_list_head, current->number);
                 terminate = 1;
+                
+                pthread_exit(NULL);
                 break;
             }
             break;

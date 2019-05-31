@@ -150,9 +150,9 @@ void *read_sdl_events()
                 strcpy(buffer, "exiting");
                 printf("Im leaving the game!\n");
                 write_payload(buffer, sock_fd);
-                done = SDL_TRUE;
+                
                 terminate = 1;
-                break;
+                pthread_exit(NULL);
             }
 
             case SDL_MOUSEBUTTONDOWN:
