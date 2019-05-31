@@ -441,7 +441,7 @@ int main(int argc, char *argv[])
     int i = 0;      // variavel de contagem
     int new_fd;     // fd dos clientes
     int flag_inicio=1;  // ver se é a primeira inicialização do jogo
-    int send_state = 0;  // flag que determina se envia board para os jogadores
+    //int send_state = 0;  // flag que determina se envia board para os jogadores
     int numero_jogador=0;   // indica o numero DO jogador
     pthread_t thread_ID;    // id da thread que lê as jogadas
     socklen_t size_addr;

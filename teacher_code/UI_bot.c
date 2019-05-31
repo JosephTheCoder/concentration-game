@@ -192,7 +192,7 @@ void read_board()
             exit(-1);
         }
 
-        else if (strcmp(buffer, "board_sent") != 0)
+        else if (strcmp(buffer, "board_sent") != 0) // recebe a board toda a board 
         {
             sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play[0], &play[1]);
 
@@ -234,7 +234,6 @@ void *read_sdl_events()
                 close_board_windows();
                 done = SDL_TRUE;
                 end = 1;
-                exit(0);
                 break;
             }
             }
@@ -436,7 +435,6 @@ int main(int argc, char *argv[])
 
     bot_status = SEND_PLAY;
     pthread_create(&thread_ID_generate_plays, NULL, generate_first_play, (void *)&dim);
-
     read_plays();
 
     printf("fim\n");
