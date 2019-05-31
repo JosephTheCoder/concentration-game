@@ -121,8 +121,8 @@ void read_plays()
                 {
                     printf("Player %d - You lost! :(\n", player_number);
                 }
-
-                break;
+                
+                done=1;
             }
 
             // turn card down
