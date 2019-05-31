@@ -5,7 +5,6 @@
 
 #include <time.h>
 
-int nr_players = 0;
 pthread_mutex_t **lock;
 play_response resp[100];
 player_t *players_list_head = NULL;
