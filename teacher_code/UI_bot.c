@@ -26,7 +26,6 @@ void read_plays()
 
     int play[2];
     char str_play[3];
-    int text_color[3];
     int color[3];
 
     int position_index;
