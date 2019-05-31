@@ -17,7 +17,7 @@
 #define BUFFER_SIZE 128
 
 int sock_fd = 0;
-int dim , n = 0;
+int dim, n = 0;
 
 int terminate = 0;
 
@@ -47,7 +47,7 @@ void read_plays()
     int color[3];
 
     int winner;
-
+    int won = 0;
     int play_origin;
 
     int n;
@@ -68,15 +68,24 @@ void read_plays()
         }
 
         sscanf(buffer, "%d", &code);
-        printf("buffer recebido no read plays: %s\n",buffer);
+        printf("buffer recebido no read plays: %s\n", buffer);
 
         if (code == 3)
         {
-            sscanf(buffer, "3 %d %d %d %s %d %d %d", &winner, &play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
-            paint_card(play_x, play_y, color[0], color[1], color[2]);
-            write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
-            
-            printf("The winner is the Player %d!\n", winner);
+            while (sscanf(buffer, "%d ", &winner) == 1)
+            {
+                if (winner == player_number)
+                {
+                    printf("Player %d - You won! :)\n", player_number);
+                    won = 1;
+                }
+            }
+
+            if (won == 0)
+            {
+                printf("Player %d - You lost! :(\n", player_number);
+            }
+
             break;
         }
 
@@ -150,7 +159,7 @@ void *read_sdl_events()
                 strcpy(buffer, "exiting");
                 printf("Im leaving the game!\n");
                 write_payload(buffer, sock_fd);
-                
+
                 terminate = 1;
                 pthread_exit(NULL);
             }
@@ -159,14 +168,13 @@ void *read_sdl_events()
             {
                 int board_x, board_y;
                 get_board_card(event.button.x, event.button.y, &board_x, &board_y);
-                if(board_x<dim && board_y<dim)
+                if (board_x < dim && board_y < dim)
                 {
                     // send play to server
                     memset(buffer, 0, BUFFER_SIZE);
                     sprintf(buffer, "%d %d\n", board_x, board_y);
                     printf("Sending play: %s\n", buffer);
                     write_payload(buffer, sock_fd);
-                    
                 }
             }
             }

@@ -19,7 +19,7 @@ typedef struct player{
     int color[3]; //[r,g,b]
     int number;
     int fd;
-    int nr_correct_cards;
+    int nr_points;
     struct player *next;
 } player_t;
 
