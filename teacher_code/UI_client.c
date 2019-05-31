@@ -16,11 +16,18 @@
 
 #define BUFFER_SIZE 128
 
-int sock_fd = 0;
-int dim , n = 0;
+int sock_fd = 0;  // sock_fd do servidor
+int dim , n = 0;  // dimensao da board e nº bytes msgs
 
-int terminate = 0;
+int terminate = 0; // acaba o jogo do jogador quando =1
 
+
+/***********************************************************************************
+ * write_payload()
+ * 
+ * Envia as jogadas ao servidor
+ * 
+ * *********************************************************************************/
 int write_payload(char *payload, int fd)
 {
     int written = 0;
@@ -37,28 +44,33 @@ int write_payload(char *payload, int fd)
     return written;
 }
 
+/***********************************************************************************
+ * read_plays()
+ * 
+ * Lê as jogadas enviadas pelo servidor e desenha as cores nas casa correspondentes
+ * Detecta se é para virar uma casa para baixo ou para cima
+ * Detecta se um dos jogadores ganhou a partida
+ * 
+ * *********************************************************************************/
 void read_plays()
-{
+{   
+    int n, i=0, cnt=0;
     int code = 0;
+    int winner;
+    int play_origin;
+    int play_x, play_y;
     char buffer1[BUFFER_SIZE] = {'\0'};
     char buffer[BUFFER_SIZE] = {'\0'};
     char resto[BUFFER_SIZE] = {'\0'};
-    int play_x, play_y;
     char str_play[3];
     int color[3];
 
-    int winner;
-
-    int play_origin;
-
-    int n, i=0, cnt=0;
 
     // Receive response from server
     while (!terminate)
     {
         cnt=0;
         n = 0;
-
 
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
@@ -101,14 +113,14 @@ void read_plays()
             printf("resto: %s\n",resto);
         }
 
-
-
+        // Enquanto ainda ha mensagens para ler no buffer1
         while(cnt>-1){
 
             sscanf(buffer, "%d", &code);
             printf("buffer recebido no read plays: %s\n",buffer);
 
-            if (code == 3)
+            // Winner or Looser
+            if (code == 3) // se algum jogador ganha
             {
                 sscanf(buffer, "3 %d %d %d %s %d %d %d", &winner, &play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
                 paint_card(play_x, play_y, color[0], color[1], color[2]);
@@ -119,14 +131,14 @@ void read_plays()
             }
 
             // turn card down
-            else if (code == -1)
+            else if (code == -1) // se é para virar uma casa para baixo
             {
                 sscanf(buffer, "-1 %d %d %d", &play_origin, &play_x, &play_y);
                 paint_card(play_x, play_y, background_color[0], background_color[1], background_color[2]);
             }
 
             // turn card up
-            else
+            else // se é para virar uma carta para cima
             {
                 sscanf(buffer, "1 %d %d %d %s %d %d %d", &play_origin, &play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
 
@@ -135,16 +147,25 @@ void read_plays()
                 paint_card(play_x, play_y, color[0], color[1], color[2]);
                 write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
             }
-        cnt--;
+            // menos uma mensagem para ler do buffer
+            cnt--;
 
-        if(cnt==0)
-            sscanf(resto,"%[^\n]s\n", buffer);
-        else if(cnt>0)
-            sscanf(resto,"%[^,]s,%[^\n]s", buffer, resto);
+            if(cnt==0) // se ja só exite uma mensagem
+                sscanf(resto,"%[^\n]s\n", buffer);
+            else if(cnt>0) // se existe mais do que uma mensagem para ler
+                sscanf(resto,"%[^,]s,%[^\n]s", buffer, resto);
         
         }
     }
 }
+
+
+/***********************************************************************************
+ * read_board()
+ * 
+ * Recebe os dados da board quando começa a jogar.
+ * 
+ * *********************************************************************************/
 
 void read_board()
 {
@@ -154,6 +175,7 @@ void read_board()
     char buffer[BUFFER_SIZE];
     int n;
 
+    // recebe todos os dados da board 
     while (strcmp(buffer, "board_sent") != 0)
     {
         memset(buffer, 0, BUFFER_SIZE);
@@ -177,6 +199,16 @@ void read_board()
     }
 }
 
+
+/***********************************************************************************
+ * read_sdl_events()
+ * 
+ * Lê do teclado:
+ *  _ se fechou a janela, acaba a sessao do jogador;
+ *  _ se jogou uma jogada ( cliquou numa casa ).
+ * 
+ * *********************************************************************************/
+
 void *read_sdl_events()
 {
     int done = 0;
@@ -189,14 +221,13 @@ void *read_sdl_events()
         {
             switch (event.type)
             {
-            case SDL_QUIT:
+            case SDL_QUIT: // carrega no botao "X" da tabela de jogo
             {
                 // send message to server saying we're about to quit
                 memset(buffer, 0, BUFFER_SIZE);
                 strcpy(buffer, "exiting");
                 printf("Im leaving the game!\n");
-                write_payload(buffer, sock_fd);
-                
+                write_payload(buffer, sock_fd);          
                 terminate = 1;
                 pthread_exit(NULL);
             }
@@ -220,6 +251,17 @@ void *read_sdl_events()
     }
     pthread_exit(NULL);
 }
+
+
+
+/***********************************************************************************
+ * read_sdl_events()
+ * 
+ * Lê do teclado:
+ *  _ se fechou a janela, acaba a sessao do jogador;
+ *  _ se jogou uma jogada ( cliquou numa casa ).
+ * 
+ * *********************************************************************************/
 
 int main(int argc, char *argv[])
 {
