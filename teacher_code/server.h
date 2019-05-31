@@ -25,6 +25,7 @@ typedef struct player{
 
 int dim;
 int nr_players = 0; // indica o numero DE jogadores
+int restart = 0;
 
 int  translate_i_to_x();
 int  translate_i_to_y();

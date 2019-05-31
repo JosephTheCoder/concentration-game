@@ -147,3 +147,56 @@ play_response board_play(int x, int y, int fd, int cancela)
   }
   return resp[fd];
 }
+
+void restart_board(board_place *board, int dim)
+{
+  int count = 0;
+  int i, j;
+  char *str_place;
+
+  dim_board = dim;
+  n_corrects = 0;
+
+  for(i=0;i<100;i++)
+      play1[i][0] = -1;
+
+  for (i = 0; i < (dim_board * dim_board); i++)
+  {
+    board[i].v[0] = '\0';
+    board[i].color[0] = 255;
+    board[i].color[1] = 255;
+    board[i].color[2] = 255;
+    board[i].state=0;
+  }
+
+  for (char c1 = 'a'; c1 < ('a' + dim_board); c1++)
+  {
+    for (char c2 = 'a'; c2 < ('a' + dim_board); c2++)
+    {
+      do
+      {
+        i = random() % dim_board;
+        j = random() % dim_board;
+        str_place = get_board_place_str(i, j);
+        printf("%d %d -%s-\n", i, j, str_place);
+      } while (str_place[0] != '\0');
+      
+      str_place[0] = c1;
+      str_place[1] = c2;
+      str_place[2] = '\0';
+      do
+      {
+        i = random() % dim_board;
+        j = random() % dim_board;
+        str_place = get_board_place_str(i, j);
+        printf("%d %d -%s-\n", i, j, str_place);
+      } while (str_place[0] != '\0');
+      str_place[0] = c1;
+      str_place[1] = c2;
+      str_place[2] = '\0';
+      count += 2;
+      if (count == dim_board * dim_board)
+        return;
+    }
+  }
+}

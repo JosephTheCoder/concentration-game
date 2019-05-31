@@ -102,13 +102,15 @@ void read_plays()
             if (code == 3) // se algum jogador ganha
             {
                 printf("Player %d - You WON! :)\n", player_number);
-                done = 1;
+                reset_board(300, 300, dim);
+                read_board();
             }
 
             else if (code == 5)
             {
                 printf("Player %d - You LOST... :(\n", player_number);
-                done = 1;
+                reset_board(300, 300, dim);
+                read_board();
             }
 
             // turn card down
