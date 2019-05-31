@@ -106,6 +106,7 @@ void read_plays()
                 {
                     while (sscanf(buffer, "%d ", &winner) == 1)
                     {
+                        printf("winner: %d\n", winner);
                         if (winner == player_number)
                         {
                             printf("Player %d - You won! :)\n", player_number);
