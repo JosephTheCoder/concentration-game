@@ -207,8 +207,8 @@ void broadcast_winners()
 {
     char buffer[BUFFER_SIZE] = {'\0'};
 
-    char won = "3";
-    char lost = "5";
+    char won[2] = "3";
+    char lost[2] = "5";
 
     player_t *current = players_list_head;
 
