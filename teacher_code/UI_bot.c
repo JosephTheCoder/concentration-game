@@ -127,7 +127,6 @@ void read_plays()
             {
                 sscanf(buffer, "-1 %d %d %d %s", &play_origin, &play[0], &play[1], str_play);
                 paint_card(play[0], play[1], background_color[0], background_color[1], background_color[2]);
-                save_playable_position(play);
 
                 bot_status = SEND_PLAY;
             }
@@ -202,12 +201,6 @@ void read_board()
             if (color[0] != background_color[0] || color[1] != background_color[1] || color[2] != background_color[2])
             {
                 write_card(play[0], play[1], str_play, 200, 200, 200);
-            }
-
-            else
-            {
-                printf("Adding playable position\n");
-                save_playable_position(play);
             }
         }
     }
