@@ -50,7 +50,7 @@ void read_plays()
     int iteration = 0;
 
     // Receive response from server
-    while (done==0)
+    while (done == 0)
     {
         cnt = 0;
         n = 0;
@@ -79,8 +79,8 @@ void read_plays()
         }
         else if (cnt > 0)
         {
-            sscanf(buffer1, "%[^,]s,", buffer);     
-            for (p = buffer1; p < buffer1+strlen(buffer1); p++)
+            sscanf(buffer1, "%[^,]s,", buffer);
+            for (p = buffer1; p < buffer1 + strlen(buffer1); p++)
             {
                 if (*p == ',')
                 {
@@ -101,24 +101,13 @@ void read_plays()
             // Winner or Looser
             if (code == 3) // se algum jogador ganha
             {
-                while (sscanf(buffer, "%d%n", &winner, &offset) > 0)
-                {
-                    printf("winner: %d\n", winner);
-                    if (winner == player_number)
-                    {
-                        printf("Player %d - You won! :)\n", player_number);
-                        won = 1;
-                        break;
-                    }
-                    
-                    *buffer += offset;
-                    iteration++;
-                }
+                printf("Player %d - You WON! :)\n", player_number);
+                done = 1;
+            }
 
-                if (won == 0)
-                {
-                    printf("Player %d - You lost! :(\n", player_number);
-                }
+            else if (code == 5)
+            {
+                printf("Player %d - You LOST... :(\n", player_number);
                 done = 1;
             }
 
