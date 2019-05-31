@@ -195,7 +195,7 @@ void *read_first_play(void *sock_fd)
     {
         memset(buffer, 0, BUFFER_SIZE);
         read(fd, buffer, sizeof(buffer));
-        //buffer[sizeof(buffer)] = '\0';
+
         printf("%s\n", buffer);
         if (strcmp(buffer, "exiting") == 0)
         {
@@ -280,6 +280,10 @@ void *read_first_play(void *sock_fd)
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2], 1);
                 
                 current->nr_correct_cards += 2;
+
+                // create string with winner's ids
+
+                // broadcast string
 
                 broadcast_winner(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
                 pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
