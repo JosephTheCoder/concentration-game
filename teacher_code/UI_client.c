@@ -45,21 +45,23 @@ void read_plays()
     char str_play[3];
     int color[3];
 
+    
     // Receive response from server
+    
     while (!done)
     {
+        
         cnt = 0;
         n = 0;
         if (done == 1)
             break;
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
-        buffer[strlen(buffer)]='\0';
         if(n == -1)
         {
-            perror("error reading play response");
-            exit(-1);
+            break;
         }
+        buffer1[strlen(buffer1)]='\0';
 
         for (i = 0; i < strlen(buffer1) - 1; i++)
         {
@@ -224,10 +226,10 @@ void *read_sdl_events()
     char buffer[BUFFER_SIZE];
     int board_x=0, board_y=0;
 
-    while (!done)
+    while (done!=1)
     {
         while (SDL_PollEvent(&event))
-        {
+        {   
             switch (event.type)
             {
             case SDL_QUIT: // carrega no botao "X" da tabela de jogo
@@ -236,9 +238,10 @@ void *read_sdl_events()
                 memset(buffer, 0, BUFFER_SIZE);
                 strcpy(buffer, "exiting");
                 printf("Im leaving the game!\n");
-                write_payload(buffer, sock_fd);   
-                close_board_windows();       
+                write_payload(buffer, sock_fd);
+                close_board_windows();     
                 done = 1;
+                break;
             }
             case SDL_MOUSEBUTTONDOWN:
             {   if(done==0)
@@ -257,8 +260,10 @@ void *read_sdl_events()
             }
         }
     }
-    pthread_exit(NULL);
-}
+   
+    printf("cheguei aqui1\n");
+    return(NULL);
+  }
 
 /***********************************************************************************
  * read_sdl_events()
@@ -322,21 +327,23 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
+    // recebe o numero de jogador associado, a dimensao da board, e as cores associadas
     sscanf(buffer, "%d %d %d %d %d", &player_number, &dim, &my_color[0], &my_color[1], &my_color[2]);
 
     printf("player number %d\n", player_number);
     printf("board dimension: %d\n", dim);
     printf("player color: [%d,%d,%d]\n", my_color[0], my_color[1], my_color[2]);
 
+    // cria a tabela de jogo
     create_board_window(300, 300, dim);
+    // posiciona as jogadas feitas
     read_board();
     printf("Received all the board info\n");
-
-    pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL);
+    // comeca a jogar
+    pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL); 
+    // detecta as jogadas enviadas pelo servidor
     read_plays();
-    pthread_join(thread_ID_read_sdl_events, NULL);
     printf("fim\n");
 
-    close(sock_fd);
     return 0;
 }
