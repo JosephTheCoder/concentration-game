@@ -32,8 +32,9 @@ int write_payload(char *payload, int fd)
  * 
  * *********************************************************************************/
 void read_plays()
-{   char *p;
-    int n=0, i=0, cnt=0;
+{
+    char *p;
+    int n = 0, i = 0, cnt = 0;
     int won = 0;
     int code = 0;
     int winner;
@@ -45,21 +46,23 @@ void read_plays()
     char str_play[3];
     int color[3];
 
-    
+    int offset;
+    int iteration = 0;
+
     // Receive response from server
-    
+
     while (!done)
     {
         cnt = 0;
         n = 0;
-        
+
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
-        if(n == -1)
+        if (n == -1)
         {
             break;
         }
-        buffer1[strlen(buffer1)]='\0';
+        buffer1[strlen(buffer1)] = '\0';
 
         for (i = 0; i < strlen(buffer1) - 1; i++)
         {
@@ -79,8 +82,8 @@ void read_plays()
         }
         else if (cnt > 0)
         {
-            printf("%d\n", sscanf(buffer1, "%[^,]s,", buffer));     
-            for (p = buffer1; p < buffer1+strlen(buffer1); p++)
+            printf("%d\n", sscanf(buffer1, "%[^,]s,", buffer));
+            for (p = buffer1; p < buffer1 + strlen(buffer1); p++)
             {
                 if (*p == ',')
                 {
@@ -100,30 +103,29 @@ void read_plays()
             printf("buffer recebido no read plays: %s\n", buffer);
             printf("code: %d\n", code);
 
-            char *pch;
-
             // Winner or Looser
             if (code == 3) // se algum jogador ganha
             {
-                pch = strtok(buffer, " ");
-                while (pch != NULL)
+                while (sscanf(buffer, "%d%n", &winner, &offset) > 0)
                 {
-                    pch = strtok(NULL, " ");
-                    sscanf(pch, "%d", &winner);
-
-                    if (winner == player_number)
+                    if (winner == player_number && iteration > 0)
                     {
                         printf("Player %d - You won! :)\n", player_number);
                         won = 1;
+                        break;
                     }
+                    
+                    *buffer += offset;
+                    iteration++;
                 }
 
                 if (won == 0)
                 {
                     printf("Player %d - You lost! :(\n", player_number);
                 }
+
                 printf("done before: %d\n", done);
-                done=1;
+                done = 1;
                 printf("done after: %d\n", done);
             }
 
@@ -147,12 +149,12 @@ void read_plays()
             // menos uma mensagem para ler do buffer
             cnt--;
 
-            if(cnt==0) // se ja só exite uma mensagem
-                sscanf(resto,"%[^\n]s\n", buffer);
-            else if(cnt>0) // se existe mais do que uma mensagem para ler
-             {
-                 sscanf(resto, "%[^,]s,", buffer);
-                 for (p = resto; p < resto+strlen(resto); p++)
+            if (cnt == 0) // se ja só exite uma mensagem
+                sscanf(resto, "%[^\n]s\n", buffer);
+            else if (cnt > 0) // se existe mais do que uma mensagem para ler
+            {
+                sscanf(resto, "%[^,]s,", buffer);
+                for (p = resto; p < resto + strlen(resto); p++)
                 {
                     if (*p == ',')
                     {
@@ -163,8 +165,7 @@ void read_plays()
                 strcpy(resto, p);
                 printf("buffer: %s\n", buffer);
                 printf("resto: %s\n", resto);
-             }   
-        
+            }
         }
     }
 }
@@ -183,14 +184,13 @@ void read_board()
     char str_play[3];
     int color[3];
     char buffer[BUFFER_SIZE];
- 
 
     // recebe todos os dados da board
     while (strcmp(buffer, "board_sent") != 0)
     {
         memset(buffer, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer, sizeof(buffer));
-        buffer[sizeof(buffer)]='\0';
+        buffer[strlen(buffer)] = '\0';
 
         if (n == -1)
         {
@@ -220,15 +220,15 @@ void read_board()
 
 void *read_sdl_events()
 {
-    
+
     SDL_Event event;
     char buffer[BUFFER_SIZE];
-    int board_x=0, board_y=0;
+    int board_x = 0, board_y = 0;
 
-    while (done!=1)
+    while (done != 1)
     {
         while (SDL_PollEvent(&event))
-        {   
+        {
             switch (event.type)
             {
             case SDL_QUIT: // carrega no botao "X" da tabela de jogo
@@ -238,16 +238,17 @@ void *read_sdl_events()
                 strcpy(buffer, "exiting");
                 printf("Im leaving the game!\n");
                 write_payload(buffer, sock_fd);
-                close_board_windows();     
+                close_board_windows();
                 done = 1;
                 break;
             }
             case SDL_MOUSEBUTTONDOWN:
-            {   if(done==0)
+            {
+                if (done == 0)
                 {
-                     get_board_card(event.button.x, event.button.y, &board_x, &board_y);
+                    get_board_card(event.button.x, event.button.y, &board_x, &board_y);
                     if (board_x < dim && board_y < dim)
-                    {  
+                    {
                         // send play to server
                         memset(buffer, 0, BUFFER_SIZE);
                         sprintf(buffer, "%d %d\n", board_x, board_y);
@@ -259,10 +260,10 @@ void *read_sdl_events()
             }
         }
     }
-   
+
     printf("cheguei aqui1\n");
-    return(NULL);
-  }
+    return (NULL);
+}
 
 /***********************************************************************************
  * read_sdl_events()
@@ -281,7 +282,7 @@ int main(int argc, char *argv[])
     pthread_t thread_ID_read_sdl_events;
     n = 0;
     dim = 0;
-    done=0;
+    done = 0;
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
@@ -319,7 +320,7 @@ int main(int argc, char *argv[])
 
     /* Read board dimension and color info */
     n = read(sock_fd, buffer, BUFFER_SIZE);
-    buffer[strlen(buffer)]='\0';
+    buffer[strlen(buffer)] = '\0';
     if (n == -1)
     {
         perror("error reading dimension of board");
@@ -339,7 +340,7 @@ int main(int argc, char *argv[])
     read_board();
     printf("Received all the board info\n");
     // comeca a jogar
-    pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL); 
+    pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL);
     // detecta as jogadas enviadas pelo servidor
     read_plays();
     printf("fim\n");
