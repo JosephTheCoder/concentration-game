@@ -26,14 +26,9 @@ void read_plays()
 
     int play[2];
     char str_play[3];
-    int text_color[3];
     int color[3];
 
-    int position_index;
     int play_origin;
-
-    memory_place *position_in_memory = NULL;
-    playable_place *random_place = NULL;
 
     int winner;
 
@@ -56,7 +51,8 @@ void read_plays()
 
         sscanf(buffer, "%d", &code);
         printf("buffer recebido no read plays: %s\n", buffer);
-
+        
+        // receives WINNER signal
         if (code == 3)
         {
             sscanf(buffer, "3 %d %d %d %s %d %d %d", &winner, &play[0], &play[1], str_play, &color[0], &color[1], &color[2]);
@@ -64,70 +60,35 @@ void read_plays()
             write_card(play[0], play[1], str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
 
             printf("The winner is the Player %d!\n", winner);
+            bot_status = IDLE;
             break;
         }
 
+        // receives signal to turn card DOWN
         else if (code == -1)
         {
             sscanf(buffer, "-1 %d %d %d %s", &play_origin, &play[0], &play[1], str_play);
             paint_card(play[0], play[1], background_color[0], background_color[1], background_color[2]);
             save_playable_position(play);
 
-            sleep(2);
-
-            if (play_origin == player_number)
-            {
-                save_in_memory(str_play, play);
-                bot_play_number = FIRST_PLAY;
-            }
+            // sleep(1);
+            bot_status = SEND_PLAY;
         }
 
+        // receives signal to turn card UP
         else
         {
-            sscanf(buffer, "%d %d %d %s %d %d %d %d %d %d", &code, &play[0], &play[1], str_play, &color[0], &color[1], &color[2], &text_color[0], &text_color[1], &text_color[2]);
+            sscanf(buffer, "1 %d %d %d %s %d %d %d", &play_origin, &play[0], &play[1], str_play, &color[0], &color[1], &color[2]);
 
             printf("Paint cell %d %d with the color %d %d %d\n", play[0], play[1], color[0], color[1], color[2]);
 
             paint_card(play[0], play[1], color[0], color[1], color[2]);
             write_card(play[0], play[1], str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
             
-            sleep(2);
-            
-            remove_playable_position(play);
+            // remove_playable_position(play);
 
-            if (bot_play_number == FIRST_PLAY)
-                bot_play_number = SECOND_PLAY;
-            
-            // SEGMENTATION FAULT
-            // If the bot has already played the first card, makes second play
-            if (bot_play_number == SECOND_PLAY)
-            {                
-                // check if the bot has seen a card like the one played
-                position_in_memory = find_relative_in_memory(str_play);
-
-                if (position_in_memory != NULL)
-                {
-                    memset(buffer, 0, BUFFER_SIZE);
-                    sprintf(buffer, "%d %d", position_in_memory->position[0], position_in_memory->position[1]);
-                    printf("Sending play: %s\n", buffer);
-                    write_payload(buffer, sock_fd);
-                }
-
-                // if he has never seen one, play a random card from the playable list
-                else
-                {
-                    position_index = rand() % nr_playable_positions;
-
-                    random_place = get_playable_position(position_index);
-
-                    memset(buffer, 0, BUFFER_SIZE);
-                    sprintf(buffer, "%d %d", random_place->position[0], random_place->position[1]);
-
-                    printf("Sending play: %s\n", buffer);
-
-                    write_payload(buffer, sock_fd);
-                }
-            }
+            // sleep(1);
+            bot_status = SEND_PLAY;
         }
     }
 }
@@ -204,18 +165,18 @@ void *read_sdl_events()
 void *generate_first_play(void *arg)
 {
     int dim = *((int *)arg);
-    int position_index;
     char buffer[BUFFER_SIZE] = {'\0'};
 
-    playable_place *random_place;
+    playable_place *random_place = (playable_place *)malloc(sizeof(playable_place));
 
     while (!terminate)
     {
-        if (bot_play_number == FIRST_PLAY)
+        if (bot_status == SEND_PLAY)
         {
-            position_index = rand() % nr_playable_positions;
+            random_place->position[0] = rand() % dim;
+            random_place->position[1] = rand() % dim;
 
-            random_place = get_playable_position(position_index);
+            // random_place = get_playable_position(position_index);
 
             memset(buffer, 0, BUFFER_SIZE);
             sprintf(buffer, "%d %d", random_place->position[0], random_place->position[1]);
@@ -223,7 +184,7 @@ void *generate_first_play(void *arg)
             printf("Sending play: %s\n", buffer);
 
             write_payload(buffer, sock_fd);
-            bot_play_number = SECOND_PLAY;
+            bot_status = WAITING_RESPONSE;
         }
     }
 
@@ -282,48 +243,6 @@ playable_place *get_playable_position(int index)
     }
 
     return current;
-}
-
-void save_in_memory(char *letters, int *position)
-{
-    // entra na cabeça, apaga a ultima
-    memory_place *new_place = (memory_place *)malloc(sizeof(memory_place));
-
-    new_place->next = bot_memory;
-    new_place->position[0] = position[0];
-    new_place->position[1] = position[1];
-
-    bot_memory = new_place;
-    nr_memory_positions++;
-
-    // if max memory has been reached, deletes oldest position
-    if (nr_memory_positions > MAX_POSITIONS_IN_MEMORY)
-    {
-        memory_place *second_last = bot_memory;
-
-        while (second_last->next->next != NULL)
-            second_last = second_last->next;
-
-        free(second_last->next);
-        second_last->next = NULL;
-
-        nr_memory_positions--;
-    }
-}
-
-memory_place *find_relative_in_memory(char *letters)
-{
-    memory_place *current = bot_memory;
-
-    while (current->next != NULL)
-    {
-        if (current->v[0] == letters[0] && current->v[1] == letters[1] && current->v[2] == letters[2])
-            return current;
-        else
-            current = current->next;
-    }
-
-    return NULL;
 }
 
 int main(int argc, char *argv[])
@@ -392,9 +311,12 @@ int main(int argc, char *argv[])
     read_board();
 
     printf("Received all the board info\n");
+    
+    sleep(2);
 
     pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL); // change this cause function only reads SDL_QUIT
 
+    bot_status = SEND_PLAY;
     pthread_create(&thread_ID_generate_plays, NULL, generate_first_play, (void *)&dim);
 
     read_plays();

@@ -168,7 +168,6 @@ void read_board()
 
         else if (strcmp(buffer, "board_sent") != 0)
         {
-            //Tem que receber a cor do texto para saber se escreve ou não ------------------------------
             sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play_x, &play_y);
 
             printf("buffer: %s\n", buffer);
@@ -197,9 +196,9 @@ void *read_sdl_events()
                 strcpy(buffer, "exiting");
                 printf("Im leaving the game!\n");
                 write_payload(buffer, sock_fd);
-                done = SDL_TRUE;
+                
                 terminate = 1;
-                break;
+                pthread_exit(NULL);
             }
 
             case SDL_MOUSEBUTTONDOWN:

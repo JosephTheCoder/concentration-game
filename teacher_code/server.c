@@ -110,7 +110,6 @@ void *read_second_play(void *sock_fd)
     }
      printf("saí do select\n");
     
-    //pthread_exit((void*)&resp);
     pthread_exit(NULL);
 }
 
@@ -196,13 +195,16 @@ void *read_first_play(void *sock_fd)
     {
         memset(buffer, 0, BUFFER_SIZE);
         read(fd, buffer, sizeof(buffer));
-        //buffer[sizeof(buffer)] = '\0';
 
+        printf("%s\n", buffer);
         if (strcmp(buffer, "exiting") == 0)
         {
             //remove player from the list
+            printf("Player %d exited!\n", current->number);
             remove_from_list(players_list_head, current->number);
-            printf("Player %d exited!", current->number);
+
+            pthread_exit(NULL);
+            terminate = 1;
             break;
         }
 
@@ -251,6 +253,9 @@ void *read_first_play(void *sock_fd)
 
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2], 1);
                 broadcast_up(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
+                
+                current->nr_correct_cards += 2;
+                
                 pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
                 break;
 
@@ -273,15 +278,25 @@ void *read_first_play(void *sock_fd)
             case 3:
                 //envia a todos a info para virar a carta e que o jogador x ganhou
                 update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2], 1);
+                
+                current->nr_correct_cards += 2;
+
+                // create string with winner's ids
+
+                // broadcast string
+
                 broadcast_winner(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
                 pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
+                
                 break;
 
             case 4:
                 //remove player from the list
-                //remove_from_list(players_list_head, current->number);
                 printf("Player %d exited!", current->number);
+                remove_from_list(players_list_head, current->number);
                 terminate = 1;
+                
+                pthread_exit(NULL);
                 break;
             }
             break;
@@ -359,6 +374,7 @@ void push_to_list(player_t *head, int *color, int fd, int player_number)
     current->next->color[0] = color[0];
     current->next->color[1] = color[1];
     current->next->color[2] = color[2];
+    current->next->nr_correct_cards = 0;
 
     current->next->next = NULL;
 }
@@ -487,6 +503,7 @@ int main(int argc, char *argv[])
             players_list_head->color[0] = color[0];
             players_list_head->color[1] = color[1];
             players_list_head->color[2] = color[2];
+            players_list_head->nr_correct_cards = 0;
             players_list_head->next = NULL;
         }
 
