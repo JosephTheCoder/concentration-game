@@ -5,7 +5,6 @@
 
 #include <time.h>
 
-int nr_players = 0;
 pthread_mutex_t **lock;
 play_response resp[100];
 player_t *players_list_head = NULL;
@@ -429,6 +428,7 @@ int remove_from_list(player_t *head, int player_number)
             head = temp->next;
         }
         free(temp);
+        nr_players--;
         return player_number;
     }
 
@@ -437,7 +437,6 @@ int remove_from_list(player_t *head, int player_number)
 
 int main(int argc, char *argv[])
 {
-    nr_players = 0; // indica o numero DE jogadores
     int *color;     // aux para escolher a cor definida para os jogadores
     int i = 0;      // variavel de contagem
     int new_fd;     // fd dos clientes
