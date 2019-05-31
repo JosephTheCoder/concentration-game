@@ -75,7 +75,7 @@ void read_plays()
             paint_card(play[0], play[1], background_color[0], background_color[1], background_color[2]);
             save_playable_position(play);
 
-            sleep(2);
+            // sleep(1);
             bot_status = SEND_PLAY;
         }
 
@@ -91,7 +91,7 @@ void read_plays()
             
             remove_playable_position(play);
 
-            sleep(2);
+            // sleep(1);
             bot_status = SEND_PLAY;
         }
     }
