@@ -176,6 +176,7 @@ void create_winners_payload(char *buffer)
 
     while(current != NULL)
     {
+        printf("player %d points: %d\n", current->number, current->nr_points);
         if (current->nr_points >= biggest_nr_points)
         {
             sprintf(number, "%d", current->number);
