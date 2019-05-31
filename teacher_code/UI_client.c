@@ -1,26 +1,5 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
 
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-
-#include "board_library.h"
-#include "UI_library.h"
-#include "server.h"
 #include "UI_client.h"
-
-#define BUFFER_SIZE 128
-
-int sock_fd = 0;  // sock_fd do servidor
-int dim , n = 0;  // dimensao da board e nº bytes msgs
-
-int terminate = 0; // acaba o jogo do jogador quando =1
-
 
 /***********************************************************************************
  * write_payload()
@@ -53,8 +32,8 @@ int write_payload(char *payload, int fd)
  * 
  * *********************************************************************************/
 void read_plays()
-{   
-    int n, i=0, cnt=0;
+{   char *p;
+    int n=0, i=0, cnt=0;
     int won = 0;
     int code = 0;
     int winner;
@@ -68,16 +47,19 @@ void read_plays()
 
   
     // Receive response from server
-    while (!terminate)
+    while (!done)
     {
         cnt = 0;
         n = 0;
         
-        printf("waiting play response\n");
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
-        buffer1[strlen(buffer1)-1] = '\0';
-        printf("strlen(buffer1)=%ld\n", strlen(buffer1));
+        buffer[strlen(buffer)]='\0';
+        if (n == -1)
+        {
+            perror("error reading play response");
+            exit(-1);
+        }
 
         for (i = 0; i < strlen(buffer1) - 1; i++)
         {
@@ -90,12 +72,6 @@ void read_plays()
 
         printf("Received play response with %d bytes: %s\n", n, buffer1);
         printf("cnt: %d\n", cnt);
-
-        if (n == -1)
-        {
-            perror("error reading play response");
-            exit(-1);
-        }
         if (cnt == 0)
         {
             sscanf(buffer1, "%[^\n]s\n", buffer);
@@ -103,9 +79,8 @@ void read_plays()
         }
         else if (cnt > 0)
         {
-            printf("%d\n", sscanf(buffer1, "%[^,]s,", buffer));
-            char *p;
-            for (p = buffer1; i < strlen(buffer1); p++)
+            printf("%d\n", sscanf(buffer1, "%[^,]s,", buffer));     
+            for (p = buffer1; p < buffer1+strlen(buffer1); p++)
             {
                 if (*p == ',')
                 {
@@ -167,7 +142,20 @@ void read_plays()
             if(cnt==0) // se ja só exite uma mensagem
                 sscanf(resto,"%[^\n]s\n", buffer);
             else if(cnt>0) // se existe mais do que uma mensagem para ler
-                sscanf(resto,"%[^,]s,%[^\n]s", buffer, resto);
+             {
+                 sscanf(resto, "%[^,]s,", buffer);
+                 for (p = resto; p < resto+strlen(resto); p++)
+                {
+                    if (*p == ',')
+                    {
+                        p = p + 1;
+                        break;
+                    }
+                }
+                strcpy(resto, p);
+                printf("buffer: %s\n", buffer);
+                printf("resto: %s\n", resto);
+             }   
         
         }
     }
@@ -183,18 +171,19 @@ void read_plays()
 
 void read_board()
 {
+    int n;
     int play_x, play_y;
     char str_play[3];
     int color[3];
     char buffer[BUFFER_SIZE];
-    int n;
+ 
 
     // recebe todos os dados da board 
     while (strcmp(buffer, "board_sent") != 0)
     {
         memset(buffer, 0, BUFFER_SIZE);
-        n = read(sock_fd, buffer, sizeof(buffer));
-        // buffer[sizeof(buffer)]='\0';
+        n = read(sock_fd, buffer, BUFFER_SIZE);
+        buffer[strlen(buffer)]='\0';
 
         if (n == -1)
         {
@@ -225,9 +214,10 @@ void read_board()
 
 void *read_sdl_events()
 {
-    int done = 0;
+    
     SDL_Event event;
     char buffer[BUFFER_SIZE];
+    int board_x=0, board_y=0;
 
     while (!done)
     {
@@ -243,22 +233,20 @@ void *read_sdl_events()
                 printf("Im leaving the game!\n");
                 write_payload(buffer, sock_fd);   
                 close_board_windows();       
-                terminate = 1;
-                exit(0);
-                //pthread_exit(NULL);
+                done = 1;
             }
-
             case SDL_MOUSEBUTTONDOWN:
-            {
-                int board_x, board_y;
-                get_board_card(event.button.x, event.button.y, &board_x, &board_y);
-                if (board_x < dim && board_y < dim)
+            {   if(done==0)
                 {
-                    // send play to server
-                    memset(buffer, 0, BUFFER_SIZE);
-                    sprintf(buffer, "%d %d\n", board_x, board_y);
-                    printf("Sending play: %s\n", buffer);
-                    write_payload(buffer, sock_fd);
+                     get_board_card(event.button.x, event.button.y, &board_x, &board_y);
+                    if (board_x < dim && board_y < dim)
+                    {  
+                        // send play to server
+                        memset(buffer, 0, BUFFER_SIZE);
+                        sprintf(buffer, "%d %d\n", board_x, board_y);
+                        printf("Sending play: %s\n", buffer);
+                        write_payload(buffer, sock_fd);
+                    }
                 }
             }
             }
@@ -284,8 +272,9 @@ int main(int argc, char *argv[])
     char buffer[BUFFER_SIZE];
 
     pthread_t thread_ID_read_sdl_events;
-    int n = 0;
+    n = 0;
     dim = 0;
+    done=0;
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0)
     {
@@ -323,7 +312,7 @@ int main(int argc, char *argv[])
 
     /* Read board dimension and color info */
     n = read(sock_fd, buffer, BUFFER_SIZE);
-
+    buffer[strlen(buffer)]='\0';
     if (n == -1)
     {
         perror("error reading dimension of board");
@@ -337,18 +326,13 @@ int main(int argc, char *argv[])
     printf("player color: [%d,%d,%d]\n", my_color[0], my_color[1], my_color[2]);
 
     create_board_window(300, 300, dim);
-
     read_board();
-
     printf("Received all the board info\n");
 
-    /* Start game (copy from memory-single) */
     pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL);
-
     read_plays();
-
+    pthread_join(thread_ID_read_sdl_events, NULL);
     printf("fim\n");
-    close_board_windows();
 
     close(sock_fd);
     return 0;

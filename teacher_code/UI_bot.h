@@ -13,6 +13,7 @@
 #include "UI_library.h"
 #include "server.h"
 
+int end;
 
 typedef struct memory_place{
   char v[3]; 
