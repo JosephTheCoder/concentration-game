@@ -262,13 +262,13 @@ void *read_first_play(void *sock_fd)
     char str[3];
 
     player_t *current = players_list_head;
+    player_t *aux = players_list_head;
     pthread_t thread_ID_secondPlay;
 
     current = find_fd_list(fd);
 
     while (!terminate)
     {
-
         memset(buffer, 0, BUFFER_SIZE);
         n = read(fd, buffer, sizeof(buffer));
         if (n == -1)
@@ -365,9 +365,19 @@ void *read_first_play(void *sock_fd)
                     broadcast_up(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
                     pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
                     current->nr_points++;
+
                     broadcast_winners();
-                    terminate = 1;
-                    pthread_exit(NULL);
+                    
+                    // RESTART:
+                    restart_board(board, dim);
+
+                    while (aux != NULL)
+                    {
+                        send_state_board(aux->fd, dim);
+                        aux->nr_points = 0;
+                        aux = aux->next;
+                    }
+                    //pthread_exit(NULL);
                     break;
 
                 case 4:
@@ -455,6 +465,35 @@ void send_state_board(int fd, int dim_board)
     memset(buffer, 0, BUFFER_SIZE);
     sprintf(buffer, "%s", "board_sent");
     write_payload(buffer, fd);
+}
+
+
+/***********************************************************************************************
+ * 
+ * 
+ * 
+ * 
+ * *********************************************************************************************/
+void board_dispatcher(int *flag_inicio, int new_fd)
+{
+    // só começa quando ha mais que dois jogadores
+    if (nr_players == 2 && *flag_inicio == 1)
+    {
+        *flag_inicio = 0;
+
+        player_t *current = players_list_head;
+
+        while (current != NULL)
+        {
+            send_state_board(current->fd, dim);
+            current = current->next;
+        }
+    }
+
+    else if (nr_players > 2)
+    {
+        send_state_board(new_fd, dim);
+    }
 }
 
 /***********************************************************************************************
@@ -623,23 +662,7 @@ int main(int argc, char *argv[])
         sprintf(buffer, "%d %d %d %d %d", nr_players, dim, color[0], color[1], color[2]);
         write_payload(buffer, new_fd);
 
-        // só começa quando ha mais que dois jogadores
-        if (nr_players == 2 && flag_inicio == 1)
-        {
-            flag_inicio = 0;
-
-            player_t *current = players_list_head;
-
-            while (current != NULL)
-            {
-                send_state_board(current->fd, dim);
-                current = current->next;
-            }
-        }
-        else if (nr_players > 2 ||(nr_players == 2 && flag_inicio == 0))
-        {
-            send_state_board(new_fd, dim);
-        }
+        board_dispatcher(&flag_inicio, new_fd);
 
         pthread_create(&thread_ID, NULL, read_first_play, (void *)&new_fd);
     }

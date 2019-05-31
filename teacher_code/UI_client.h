@@ -1,6 +1,4 @@
 
-#define CONCENTRATION_GAME_PORT 3030
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -16,7 +14,7 @@
 #include "UI_library.h"
 #include "server.h"
 
-
+#define CONCENTRATION_GAME_PORT 3031
 #define BUFFER_SIZE 128
 
 int sock_fd;  // sock_fd do servidor

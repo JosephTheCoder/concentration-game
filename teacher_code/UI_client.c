@@ -97,13 +97,15 @@ void read_plays()
             if (code == 3) // se algum jogador ganha
             {
                 printf("Player %d - You WON! :)\n", player_number);
-                done = 1;
+                reset_board(300, 300, dim);
+                read_board();
             }
 
             else if (code == 5)
             {
                 printf("Player %d - You LOST... :(\n", player_number);
-                done = 1;
+                reset_board(300, 300, dim);
+                read_board();
             }
 
             // turn card down
@@ -174,7 +176,7 @@ void read_board()
             perror("error reading cell state");
             exit(-1);
         }
-         buffer[sizeof(buffer)]='\0';
+         buffer[strlen(buffer)]='\0';
         if (strcmp(buffer, "board_sent") != 0)
         {
             sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play_x, &play_y);
