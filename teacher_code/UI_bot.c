@@ -169,7 +169,6 @@ void *read_sdl_events()
 void *generate_first_play(void *arg)
 {
     int dim = *((int *)arg);
-    int position_index;
     char buffer[BUFFER_SIZE] = {'\0'};
 
     playable_place *random_place;
@@ -178,9 +177,8 @@ void *generate_first_play(void *arg)
     {
         if (bot_status == SEND_PLAY)
         {
-            position_index = rand() % nr_playable_positions;
-
-            random_place = get_playable_position(position_index);
+            random_place->position[0] = rand() % dim;
+            random_place->position[1] = rand() % dim;
 
             memset(buffer, 0, BUFFER_SIZE);
             sprintf(buffer, "%d %d", random_place->position[0], random_place->position[1]);
