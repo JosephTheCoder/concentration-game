@@ -184,7 +184,6 @@ void create_winners_payload(char *buffer)
             strcat(buffer, " ");
             biggest_nr_points = current->nr_points;
         }
-
         current = current->next;
     }
 }
@@ -199,9 +198,10 @@ void broadcast_winners()
     create_winners_payload(buffer);
     strcat(buffer, "\n");
 
+
+
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
-    exit(1);
 }
 
 /*****************************************************************************************+*****/
