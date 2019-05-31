@@ -545,10 +545,7 @@ int main(int argc, char *argv[])
         if (nr_players == 2)
         {
             flag_inicio=0;
-            send_state = 1;
-        }
-        if (send_state == 1)
-        {
+            
             player_t *current = players_list_head;
 
             while (current != NULL)
@@ -557,6 +554,12 @@ int main(int argc, char *argv[])
                 current = current->next;
             }
         }
+
+        else
+        {
+            send_state_board(new_fd, dim);
+        }
+        
         pthread_create(&thread_ID, NULL, read_first_play, (void *)&new_fd);
     }
 
