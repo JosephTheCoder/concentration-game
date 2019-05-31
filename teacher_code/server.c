@@ -428,7 +428,9 @@ int remove_from_list(player_t *head, int player_number)
         {
             head = temp->next;
         }
+
         free(temp);
+        nr_players--;
         return player_number;
     }
 
@@ -437,13 +439,11 @@ int remove_from_list(player_t *head, int player_number)
 
 int main(int argc, char *argv[])
 {
-    nr_players = 0; // indica o numero DE jogadores
     int *color;     // aux para escolher a cor definida para os jogadores
     int i = 0;      // variavel de contagem
     int new_fd;     // fd dos clientes
     int flag_inicio=1;  // ver se é a primeira inicialização do jogo
     int send_state = 0;  // flag que determina se envia board para os jogadores
-    int numero_jogador=0;   // indica o numero DO jogador
     pthread_t thread_ID;    // id da thread que lê as jogadas
     socklen_t size_addr;
     struct sockaddr_in local_addr, client_addr;   // enderenços dos clientes
@@ -505,9 +505,8 @@ int main(int argc, char *argv[])
         }
 
         nr_players++;   // indica o numero DE jogadores
-        numero_jogador++; // indica o numero DO jogador
 
-        printf("Player %d connected!\n", numero_jogador);
+        printf("Player %d connected!\n", nr_players);
         color = random_color(); // escolhe uma cor random para associar a esse jogador
 
         // Se for a primeira ver que o jogo esta a ser iniciado, cria a lista de jogadores
@@ -517,7 +516,7 @@ int main(int argc, char *argv[])
             if (players_list_head == NULL)
                 exit(1);
 
-            players_list_head->number = numero_jogador;
+            players_list_head->number = nr_players;
             players_list_head->fd = new_fd;
             players_list_head->color[0] = color[0];
             players_list_head->color[1] = color[1];
