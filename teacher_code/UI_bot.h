@@ -52,7 +52,6 @@ int text_color[3] = {200, 200, 200};
 int nr_playable_positions = 0;
 int nr_memory_positions = 0;
 
-memory_place *bot_memory = NULL; // saves the last played positions info
 playable_place *playable_positions = NULL; // saves playable positions
 
 
@@ -61,8 +60,5 @@ void read_plays();
 void read_board();
 void *read_sdl_events();
 void *generate_first_play();
-void save_playable_position(int *new_position);
-void remove_playable_position(int *position);
 playable_place *get_playable_position(int index);
-memory_place *find_relative_in_memory(char *letters);
 void save_in_memory(char *letters, int *position);

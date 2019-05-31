@@ -1,13 +1,12 @@
 
 #include "UI_bot.h"
 
-
 /***********************************************************************************
+ * write_payload()
  * 
+ * Envia as jogadas ao servidor
  * 
- * 
- * 
- * ********************************************************************************/
+ * *********************************************************************************/
 int write_payload(char *payload, int fd)
 {
     int written = 0;
@@ -25,12 +24,15 @@ int write_payload(char *payload, int fd)
 }
 
 
+
 /***********************************************************************************
+ * read_plays()
  * 
+ * Lê as jogadas enviadas pelo servidor e desenha as cores nas casa correspondentes
+ * Detecta se é para virar uma casa para baixo ou para cima
+ * Detecta se um dos jogadores ganhou a partida
  * 
- * 
- * 
- * ********************************************************************************/
+ * *********************************************************************************/
 void read_plays()
 {
    
@@ -190,11 +192,12 @@ void read_board()
 
 
 /***********************************************************************************
+ * read_sdl_events()
  * 
+ * Lê do teclado:
+ *  _ se fechou a janela, acaba a sessao do jogador;
  * 
- * 
- * 
- * ********************************************************************************/
+ * *********************************************************************************/
 void *read_sdl_events()
 {
     
@@ -224,9 +227,9 @@ void *read_sdl_events()
 
 
 /***********************************************************************************
+ * generate_first_play():
  * 
- * 
- * 
+ *  Gera uma jogada aleatoria pelo bot (é first e second play)
  * 
  * ********************************************************************************/
 void *generate_first_play(void *arg)
@@ -257,58 +260,6 @@ void *generate_first_play(void *arg)
 }
 
 
-/***********************************************************************************
- * 
- * 
- * 
- * 
- * ********************************************************************************/
-void save_playable_position(int *new_position)
-{
-    playable_place *playable_pos = (playable_place *)malloc(sizeof(playable_place));
-
-    playable_pos->next = playable_positions;
-    playable_pos->position[0] = new_position[0];
-    playable_pos->position[1] = new_position[1];
-
-    // head = playable_pos;
-    playable_positions = playable_pos;
-    nr_playable_positions++;
-}
-
-
-/***********************************************************************************
- * 
- * 
- * 
- * 
- * ********************************************************************************/
-void remove_playable_position(int *position)
-{
-    playable_place *temp = playable_positions;
-
-    playable_place *prev = NULL;
-
-    while (temp->position[0] != position[0] && temp->position[1] != position[1] && temp->next != NULL)
-    {
-        prev = temp;
-        temp = temp->next;
-    }
-
-    if (temp->position[0] != position[0] && temp->position[1])
-    {
-        if (prev)
-        {
-            prev->next = temp->next;
-        }
-        else
-        {
-            playable_positions = temp->next;
-        }
-        free(temp);
-        nr_playable_positions--;
-    }
-}
 
 /***********************************************************************************
  * 
