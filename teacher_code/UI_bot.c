@@ -83,7 +83,7 @@ void read_plays()
         // receives signal to turn card UP
         else
         {
-            sscanf(buffer, "%d %d %d %s %d %d %d %d %d %d", &code, &play[0], &play[1], str_play, &color[0], &color[1], &color[2], &text_color[0], &text_color[1], &text_color[2]);
+            sscanf(buffer, "1 %d %d %d %s %d %d %d", &play_origin, &play[0], &play[1], str_play, &color[0], &color[1], &color[2]);
 
             printf("Paint cell %d %d with the color %d %d %d\n", play[0], play[1], color[0], color[1], color[2]);
 
