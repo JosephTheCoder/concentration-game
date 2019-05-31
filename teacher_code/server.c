@@ -91,12 +91,10 @@ void *read_second_play(void *sock_fd)
         printf("timeout\n"); /* a timeout occured */
     }else{
        read(fd, buffer, sizeof(buffer));
-
         if (strcmp(buffer, "exiting") == 0)
         {
             resp[fd].code = 4;
-            pthread_exit(NULL);
-        }
+        }else{
 
         sscanf(buffer, "%d %d\n", &x, &y);
         printf("Buffer 2nd play: %s\n", buffer);
@@ -107,6 +105,7 @@ void *read_second_play(void *sock_fd)
 
         if (resp[fd].code == 0)
             pthread_mutex_unlock(&lock[x][y]);
+        }
     }
      printf("saí do select\n");
     
@@ -216,7 +215,6 @@ void *read_first_play(void *sock_fd)
 
     current = find_fd_list(fd);
     int terminate = 0;
-    
     char str[3];
 
     while (!terminate)
@@ -226,16 +224,13 @@ void *read_first_play(void *sock_fd)
         read(fd, buffer, sizeof(buffer));
         buffer[strlen(buffer)]='\0';
         printf("%s\n", buffer);
+        printf("number of players:%d\n", nr_players);
 
         if (strcmp(buffer, "exiting") == 0)
         {
-            nr_players--;
             //remove player from the list
             printf("Player %d exited!\n", current->number);
             remove_from_list(players_list_head, current->number);
-            pthread_exit(NULL);
-            terminate = 1;
-            break;
             
         }else if(nr_players>1){
 
@@ -286,7 +281,7 @@ void *read_first_play(void *sock_fd)
                     update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2], 1);
                     broadcast_up(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
                     
-                     current->nr_points++;
+                    current->nr_points++;
                     
                     pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
                      break;
@@ -316,15 +311,14 @@ void *read_first_play(void *sock_fd)
                     pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
                     current->nr_points++;
                     broadcast_winners();
+                    terminate=1;
+                    pthread_exit(NULL);
                     break;
 
                 case 4:
                     //remove player from the list
                     printf("Player %d exited!", current->number);
-                    remove_from_list(players_list_head, current->number);
-                    terminate = 1;
-                    
-                    pthread_exit(NULL);
+                    remove_from_list(players_list_head, current->number); 
                     break;
                  }
             }
@@ -540,7 +534,7 @@ int main(int argc, char *argv[])
         write_payload(buffer, new_fd);
 
         // só começa quando ha mais que dois jogadores
-        if (nr_players == 2)
+        if (nr_players == 2 && flag_inicio==1)
         {
             flag_inicio=0;
             

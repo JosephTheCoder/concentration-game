@@ -1,6 +1,13 @@
 
 #include "UI_bot.h"
 
+
+/***********************************************************************************
+ * 
+ * 
+ * 
+ * 
+ * ********************************************************************************/
 int write_payload(char *payload, int fd)
 {
     int written = 0;
@@ -12,99 +19,161 @@ int write_payload(char *payload, int fd)
         {
             return -1;
         }
-
         written += n;
     }
 
     return written;
 }
 
+
+/***********************************************************************************
+ * 
+ * 
+ * 
+ * 
+ * ********************************************************************************/
 void read_plays()
 {
-    int code = 0;
+    
+    char buffer1[BUFFER_SIZE] = {'\0'};
     char buffer[BUFFER_SIZE] = {'\0'};
-
-    int play[2];
-    char str_play[3];
-    int color[3];
-
-    int play_origin;
-
-    int winner;
+    char rest[BUFFER_SIZE] = {'\0'};
+    char *p=NULL;
+    int play[2]={0};
+    char str_play[3]= {'\0'};;
+    int color[3]={0};
+    int play_origin=0;
+    int code = 0;
+    int winner=0;
     int won = 0;
-
-    int n;
+    int cnt=0;
+    int n=0, i=0;
 
     // Receive response from server
-    while (!terminate)
+    while (!end)
     {
-        n = 0;
-        memset(buffer, 0, BUFFER_SIZE);
-        n = read(sock_fd, buffer, BUFFER_SIZE);
-
-        printf("Received play response with %d bytes: %s\n", n, buffer);
-
+        
+        memset(buffer1, 0, BUFFER_SIZE);
+        n = read(sock_fd, buffer1, BUFFER_SIZE);
+        buffer1[BUFFER_SIZE]='\0';
         if (n == -1)
         {
             perror("error reading play response");
             exit(-1);
         }
-
-        sscanf(buffer, "%d", &code);
-        printf("buffer recebido no read plays: %s\n", buffer);
-
-        // receives WINNER signal
-        if (code == 3)
+        // substitui "\n" no meio da string por virgulas para separar as diferentes mensagens
+        for (i = 0; i < strlen(buffer1) - 1; i++)
         {
-            if (code == 3)
+            if (buffer1[i] == '\n')
             {
-                while (sscanf(buffer, "%d ", &winner) == 1)
-                {
-                    if (winner == player_number)
-                    {
-                        printf("Player %d - You won! :)\n", player_number);
-                        won = 1;
-                    }
-                }
-
-                if (won == 0)
-                {
-                    printf("Player %d - You lost! :(\n", player_number);
-                }
-
-                break;
+                buffer1[i] = ',';
+                cnt += 1;
             }
         }
-
-        // receives signal to turn card DOWN
-        else if (code == -1)
+        // cnt é o numero de mensagens recebidas
+        printf("cnt: %d\n", cnt);
+        if (cnt == 0)
         {
-            sscanf(buffer, "-1 %d %d %d %s", &play_origin, &play[0], &play[1], str_play);
-            paint_card(play[0], play[1], background_color[0], background_color[1], background_color[2]);
-            save_playable_position(play);
-
-            // sleep(1);
-            bot_status = SEND_PLAY;
+            sscanf(buffer1, "%[^\n]s\n", buffer);
+            printf("buffer: %s\n", buffer);
+        }
+        else if (cnt > 0)
+        {
+            printf("%d\n", sscanf(buffer1, "%[^,]s,", buffer));     
+            for (p = buffer1; p < buffer1 + strlen(buffer1); p++)
+            {
+                if (*p == ',')
+                {
+                    p = p + 1;
+                    break;
+                }
+            }
+            strcpy(rest, p);
+            printf("buffer: %s\n", buffer);
+            printf("resto: %s\n", rest);
         }
 
-        // receives signal to turn card UP
-        else
-        {
-            sscanf(buffer, "1 %d %d %d %s %d %d %d", &play_origin, &play[0], &play[1], str_play, &color[0], &color[1], &color[2]);
+        // Enquanto ainda ha mensagens para ler no buffer1
+        while(cnt>-1){
 
-            printf("Paint cell %d %d with the color %d %d %d\n", play[0], play[1], color[0], color[1], color[2]);
+            sscanf(buffer, "%d", &code);
+            printf("buffer recebido no read plays: %s\n", buffer);
 
-            paint_card(play[0], play[1], color[0], color[1], color[2]);
-            write_card(play[0], play[1], str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
+            // receives WINNER signal
+            if (code == 3)
+            {
+                if (code == 3)
+                {
+                    while (sscanf(buffer, "%d ", &winner) == 1)
+                    {
+                        if (winner == player_number)
+                        {
+                            printf("Player %d - You won! :)\n", player_number);
+                            won = 1;
+                        }
+                    }
 
-            // remove_playable_position(play);
+                    if (won == 0)
+                    {
+                        printf("Player %d - You lost! :(\n", player_number);
+                    }
 
-            // sleep(1);
-            bot_status = SEND_PLAY;
+                    break;
+                }
+            }
+
+            // receives signal to turn card DOWN
+            else if (code == -1)
+            {
+                sscanf(buffer, "-1 %d %d %d %s", &play_origin, &play[0], &play[1], str_play);
+                paint_card(play[0], play[1], background_color[0], background_color[1], background_color[2]);
+                save_playable_position(play);
+
+                bot_status = SEND_PLAY;
+            }
+
+            // receives signal to turn card UP
+            else
+            {
+                sscanf(buffer, "1 %d %d %d %s %d %d %d", &play_origin, &play[0], &play[1], str_play, &color[0], &color[1], &color[2]);
+                printf("Paint cell %d %d with the color %d %d %d\n", play[0], play[1], color[0], color[1], color[2]);
+                paint_card(play[0], play[1], color[0], color[1], color[2]);
+                write_card(play[0], play[1], str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
+
+                bot_status = SEND_PLAY;
+            }
+
+            // decrementa o numero de mensagens a ler ainda
+            cnt--;
+            if(cnt==0) // se ja só exite uma mensagem
+                sscanf(rest,"%[^\n]s\n", buffer);
+            else if(cnt>0) // se existe mais do que uma mensagem para ler
+             {
+                 sscanf(rest, "%[^,]s,", buffer);
+                 for (p = rest; p < rest+strlen(rest); p++)
+                {
+                    if (*p == ',')
+                    {
+                        p = p + 1;
+                        break;
+                    }
+                }
+                strcpy(rest, p);
+                printf("buffer: %s\n", buffer);
+                printf("resto: %s\n", rest);
+             }   
+        
         }
     }
 }
 
+
+/***********************************************************************************
+ * 
+ * 
+ * 
+ * 
+ * ********************************************************************************/
 void read_board()
 {
     int play[2];
@@ -116,9 +185,8 @@ void read_board()
     while (strcmp(buffer, "board_sent") != 0)
     {
         memset(buffer, 0, BUFFER_SIZE);
-        n = read(sock_fd, buffer, sizeof(buffer));
-        //buffer[sizeof(buffer)]='\0';
-
+        n = read(sock_fd, buffer, BUFFER_SIZE);
+        buffer[BUFFER_SIZE]='\0';
         if (n == -1)
         {
             perror("error reading cell state");
@@ -145,6 +213,13 @@ void read_board()
     }
 }
 
+
+/***********************************************************************************
+ * 
+ * 
+ * 
+ * 
+ * ********************************************************************************/
 void *read_sdl_events()
 {
     int done = 0;
@@ -163,8 +238,10 @@ void *read_sdl_events()
                 memset(buffer, 0, BUFFER_SIZE);
                 strcpy(buffer, "exiting");
                 write_payload(buffer, sock_fd);
+                close_board_windows();
                 done = SDL_TRUE;
-                terminate = 1;
+                end = 1;
+                exit(0);
                 break;
             }
             }
@@ -174,6 +251,13 @@ void *read_sdl_events()
     pthread_exit(NULL);
 }
 
+
+/***********************************************************************************
+ * 
+ * 
+ * 
+ * 
+ * ********************************************************************************/
 void *generate_first_play(void *arg)
 {
     int dim = *((int *)arg);
@@ -181,7 +265,7 @@ void *generate_first_play(void *arg)
 
     playable_place *random_place = (playable_place *)malloc(sizeof(playable_place));
 
-    while (!terminate)
+    while (!end)
     {
         if (bot_status == SEND_PLAY)
         {
@@ -199,10 +283,16 @@ void *generate_first_play(void *arg)
             bot_status = WAITING_RESPONSE;
         }
     }
-
     pthread_exit(NULL);
 }
 
+
+/***********************************************************************************
+ * 
+ * 
+ * 
+ * 
+ * ********************************************************************************/
 void save_playable_position(int *new_position)
 {
     playable_place *playable_pos = (playable_place *)malloc(sizeof(playable_place));
@@ -216,6 +306,13 @@ void save_playable_position(int *new_position)
     nr_playable_positions++;
 }
 
+
+/***********************************************************************************
+ * 
+ * 
+ * 
+ * 
+ * ********************************************************************************/
 void remove_playable_position(int *position)
 {
     playable_place *temp = playable_positions;
@@ -243,6 +340,13 @@ void remove_playable_position(int *position)
     }
 }
 
+/***********************************************************************************
+ * 
+ * 
+ * 
+ * 
+ * ********************************************************************************/
+
 playable_place *get_playable_position(int index)
 {
     int i = 0;
@@ -257,8 +361,16 @@ playable_place *get_playable_position(int index)
     return current;
 }
 
+
+/***********************************************************************************
+ * 
+ * 
+ * 
+ * 
+ * ********************************************************************************/
 int main(int argc, char *argv[])
 {
+    end=0;
     struct sockaddr_in server_addr;
     char buffer[BUFFER_SIZE];
 
@@ -305,6 +417,7 @@ int main(int argc, char *argv[])
 
     /* Read board dimension and color info */
     n = read(sock_fd, buffer, BUFFER_SIZE);
+    buffer[BUFFER_SIZE]='\0';
 
     if (n == -1)
     {
