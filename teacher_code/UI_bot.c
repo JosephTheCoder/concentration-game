@@ -55,7 +55,7 @@ void read_plays()
         
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
-        buffer1[BUFFER_SIZE]='\0';
+        buffer1[strlen(buffer1)]='\0';
         if (n == -1)
         {
             perror("error reading play response");
@@ -185,7 +185,7 @@ void read_board()
     {
         memset(buffer, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer, BUFFER_SIZE);
-        buffer[BUFFER_SIZE]='\0';
+        buffer[strlen(buffer)]='\0';
         if (n == -1)
         {
             perror("error reading cell state");
@@ -409,7 +409,7 @@ int main(int argc, char *argv[])
 
     /* Read board dimension and color info */
     n = read(sock_fd, buffer, BUFFER_SIZE);
-    buffer[BUFFER_SIZE]='\0';
+    buffer[strlen(buffer)]='\0';
 
     if (n == -1)
     {
