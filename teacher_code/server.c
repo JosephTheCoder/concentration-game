@@ -555,7 +555,7 @@ int main(int argc, char *argv[])
             }
         }
 
-        else
+        else if (nr_players > 2)
         {
             send_state_board(new_fd, dim);
         }
