@@ -11,6 +11,7 @@
 
 #include "board_library.h"
 #include "UI_library.h"
+#include "server.h"
 
 int end;
 

@@ -29,5 +29,4 @@ int get_card_state(int , int );
 void init_board(int);
 play_response board_play (int, int, int, int);
 int linear_conv(int, int);
-void reset_board(int width, int height,  int dim)
-
+void restart_board(board_place *board, int dim);

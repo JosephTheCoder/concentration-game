@@ -10,3 +10,4 @@ void clear_card(int  board_x, int board_y);
 void get_board_card(int mouse_x, int mouse_y, int * board_x, int *board_y);
 void create_board_window(int width, int height,  int dim);
 void close_board_windows();
+void reset_board(int width, int height,  int dim);
