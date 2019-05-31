@@ -1,5 +1,7 @@
 #include <stdlib.h>
 
+
+
 typedef struct board_place{
   char v[3]; 
   int color[3];

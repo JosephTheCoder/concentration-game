@@ -47,13 +47,12 @@ void read_plays()
 
     
     // Receive response from server
-    
-    while (!done)
+    while (done==0)
     {
         
         cnt = 0;
         n = 0;
-        if (done == 1)
+        if (done != 0)
             break;
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
@@ -72,8 +71,6 @@ void read_plays()
             }
         }
 
-        printf("Received play response with %d bytes: %s\n", n, buffer1);
-        printf("cnt: %d\n", cnt);
         if (cnt == 0)
         {
             sscanf(buffer1, "%[^\n]s\n", buffer);
@@ -81,7 +78,7 @@ void read_plays()
         }
         else if (cnt > 0)
         {
-            printf("%d\n", sscanf(buffer1, "%[^,]s,", buffer));     
+            sscanf(buffer1, "%[^,]s,", buffer);     
             for (p = buffer1; p < buffer1+strlen(buffer1); p++)
             {
                 if (*p == ',')
@@ -91,8 +88,6 @@ void read_plays()
                 }
             }
             strcpy(resto, p);
-            printf("buffer: %s\n", buffer);
-            printf("resto: %s\n", resto);
         }
 
         // Enquanto ainda ha mensagens para ler no buffer1
