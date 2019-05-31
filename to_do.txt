@@ -1,14 +1,19 @@
+Sophie 
+Recomeçar
+
+Ze
+exit - se so restar um jogador tem que se acabar o jogo
+Como ganhar o jogo? - e verificar se o player certo ganha
+
+Em cada jogador guardar numero de cartas certas
+No fim correr a lista, ver quais os jogadores com mais pontos
+Enviar a todos a lista de jogadores com mais pontos
+Se um cliente tiver o seu id na lista, ganhou!
 
 Não esquecer mudar a cor das letras para branco
 
 Server:
 Remove player from list when he exits.
-
-enviar dim e cor na mesma mensagem
-
-enviar numero do jogador logo ao inicio
-enviar id do jogador em cada buffer
-
 
 Client:
 Quando carregas 2a vez numa casa filled ele vira para baixo regista a 1st play, mas não envia ao jogadores
@@ -21,7 +26,7 @@ When exit client says leaving the game but server doesnt get response
 
 Bot:
 
-Não recebe a board
+Não insere as posições na lista de playable positions quando recebe a board
 
 -- Doesnt wait to play again (sleep not working)
 -- At the end it will spend a lot of time trying to find the right card
