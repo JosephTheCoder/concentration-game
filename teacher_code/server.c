@@ -225,8 +225,6 @@ void *read_first_play(void *sock_fd)
 
         if (strcmp(buffer, "exiting") == 0)
         {
-            nr_players --;
-            //remove player from the list
             printf("Player %d exited!\n", current->number);
             remove_from_list(players_list_head, current->number);
             pthread_exit(NULL);
