@@ -169,13 +169,18 @@ void create_winners_payload(char *buffer)
 
     int biggest_nr_points = 0;
 
-    sprintf(buffer, "3 "); // insert code
-    
+    sprintf(buffer, "3"); // insert code
+    strcat(buffer, " ");
+
+    char number[3];
+
     while(current != NULL)
     {
         if (current->nr_points >= biggest_nr_points)
         {
-            sprintf(buffer, "%d ", current->number);
+            sprintf(number, "%d", current->number);
+            strcat(buffer, number);
+            strcat(buffer, " ");
             biggest_nr_points = current->nr_points;
         }
 
@@ -191,7 +196,6 @@ void broadcast_winners()
     char buffer[BUFFER_SIZE] = {'\0'};
 
     create_winners_payload(buffer);
-    strcat(buffer,"\n");
 
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
