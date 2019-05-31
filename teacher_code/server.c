@@ -201,6 +201,7 @@ void broadcast_winners()
 
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
+    exit(1);
 }
 
 /*****************************************************************************************+*****/
