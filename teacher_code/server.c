@@ -205,8 +205,11 @@ void broadcast_down(int origin_player, int x, int y, char *str)
  * *********************************************************************************************/
 void broadcast_winners()
 {
-    char won_buffer[1] = "3";
-    char lost_buffer[1] = "5";
+    char buffer[BUFFER_SIZE] = {'\0'};
+
+    char won = "3";
+    char lost = "5";
+
     player_t *current = players_list_head;
 
     int biggest_nr_points = 0;
@@ -227,14 +230,16 @@ void broadcast_winners()
     {
         if (current->nr_points == biggest_nr_points)
         {
-            printf("sending won buffer: %s\n", won_buffer);
-            write_payload(won_buffer, current->fd);
+            memset(buffer, 0, BUFFER_SIZE);
+            strcat(buffer, won);
+            write_payload(buffer, current->fd);
         }
 
         else
         {
-            printf("sending lost buffer: %s\n", lost_buffer);
-            write_payload(lost_buffer, current->fd);
+            memset(buffer, 0, BUFFER_SIZE);
+            strcat(buffer, lost);
+            write_payload(buffer, current->fd);
         }
 
         current = current->next;
