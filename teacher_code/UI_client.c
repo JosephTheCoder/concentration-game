@@ -162,7 +162,7 @@ void read_board()
     char str_play[3];
     int color[3];
     char buffer[BUFFER_SIZE];
- 
+    printf("imprimir board\n");
 
     // recebe todos os dados da board
     while (strcmp(buffer, "board_sent") != 0)
@@ -174,7 +174,7 @@ void read_board()
             perror("error reading cell state");
             exit(-1);
         }
-         buffer[strlen(buffer)]='\0';
+        buffer[strlen(buffer)]='\0';
         if (strcmp(buffer, "board_sent") != 0)
         {
             sscanf(buffer, "%s %d %d %d %d %d", str_play, &color[0], &color[1], &color[2], &play_x, &play_y);

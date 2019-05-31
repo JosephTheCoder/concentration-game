@@ -453,7 +453,7 @@ void send_state_board(int fd, int dim_board)
         sprintf(str, "%d", translate_i_to_y(i, dim_board));
         strcat(buffer, str);
 
-        write(fd, buffer, sizeof(buffer));
+        write(fd, buffer, strlen(buffer));
     }
 
     memset(buffer, 0, BUFFER_SIZE);
