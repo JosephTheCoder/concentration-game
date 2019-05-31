@@ -50,7 +50,8 @@ void read_plays()
     {
         cnt = 0;
         n = 0;
-        
+        if (done == 1)
+            break;
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
         buffer[strlen(buffer)]='\0';
@@ -121,7 +122,7 @@ void read_plays()
                 {
                     printf("Player %d - You lost! :(\n", player_number);
                 }
-                
+
                 done=1;
             }
 
