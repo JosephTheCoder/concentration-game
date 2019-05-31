@@ -67,17 +67,16 @@ void read_plays()
     int color[3];
 
   
-
-
     // Receive response from server
     while (!terminate)
     {
         cnt = 0;
         n = 0;
-
+        
+        printf("waiting play response\n");
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
-        buffer1[strlen(buffer1)] = '\0';
+        buffer1[strlen(buffer1)-1] = '\0';
         printf("strlen(buffer1)=%ld\n", strlen(buffer1));
 
         for (i = 0; i < strlen(buffer1) - 1; i++)
