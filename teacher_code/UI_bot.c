@@ -1,13 +1,12 @@
 
 #include "UI_bot.h"
 
-
 /***********************************************************************************
+ * write_payload()
  * 
+ * Envia as jogadas ao servidor
  * 
- * 
- * 
- * ********************************************************************************/
+ * *********************************************************************************/
 int write_payload(char *payload, int fd)
 {
     int written = 0;
@@ -25,12 +24,15 @@ int write_payload(char *payload, int fd)
 }
 
 
+
 /***********************************************************************************
+ * read_plays()
  * 
+ * Lê as jogadas enviadas pelo servidor e desenha as cores nas casa correspondentes
+ * Detecta se é para virar uma casa para baixo ou para cima
+ * Detecta se um dos jogadores ganhou a partida
  * 
- * 
- * 
- * ********************************************************************************/
+ * *********************************************************************************/
 void read_plays()
 {
    
@@ -194,11 +196,12 @@ void read_board()
 
 
 /***********************************************************************************
+ * read_sdl_events()
  * 
+ * Lê do teclado:
+ *  _ se fechou a janela, acaba a sessao do jogador;
  * 
- * 
- * 
- * ********************************************************************************/
+ * *********************************************************************************/
 void *read_sdl_events()
 {
     
@@ -228,9 +231,9 @@ void *read_sdl_events()
 
 
 /***********************************************************************************
+ * generate_first_play():
  * 
- * 
- * 
+ *  Gera uma jogada aleatoria pelo bot (é first e second play)
  * 
  * ********************************************************************************/
 void *generate_first_play(void *arg)
@@ -253,8 +256,6 @@ void *generate_first_play(void *arg)
             random_place->position[0] = rand() % dim;
             random_place->position[1] = rand() % dim;
 
-            // random_place = get_playable_position(position_index);
-
             memset(buffer, 0, BUFFER_SIZE);
             sprintf(buffer, "%d %d", random_place->position[0], random_place->position[1]);
             write_payload(buffer, sock_fd);
@@ -266,11 +267,14 @@ void *generate_first_play(void *arg)
 }
 
 /***********************************************************************************
+ * main()
  * 
+ * Faz a connecão com o servidor, recebe os parametros iniciais como a dimensao da
+ * board, a cor associada e o numero de jogador.
  * 
+ * Inicia as jogadas do jogador e recebe informação do servidor
  * 
- * 
- * ********************************************************************************/
+ * *********************************************************************************/
 int main(int argc, char *argv[])
 {
     

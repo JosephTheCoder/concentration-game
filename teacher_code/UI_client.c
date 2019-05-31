@@ -240,11 +240,13 @@ void *read_sdl_events()
   }
 
 /***********************************************************************************
- * read_sdl_events()
+ * main()
  * 
- * Lê do teclado:
- *  _ se fechou a janela, acaba a sessao do jogador;
- *  _ se jogou uma jogada ( cliquou numa casa ).
+ * Faz a connecão com o servidor, recebe os parametros iniciais como a dimensao da
+ * board, a cor associada e o numero de jogador.
+ * 
+ * Comeca a ler do SDL e consequencemente a jogar . Recebe tambem informação do 
+ * servidor.
  * 
  * *********************************************************************************/
 
