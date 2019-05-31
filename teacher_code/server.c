@@ -226,10 +226,16 @@ void broadcast_winners()
     while (current != NULL)
     {
         if (current->nr_points == biggest_nr_points)
+        {
+            printf("sending won buffer: %s\n", won_buffer);
             write_payload(won_buffer, current->fd);
+        }
 
         else
+        {
+            printf("sending lost buffer: %s\n", lost_buffer);
             write_payload(lost_buffer, current->fd);
+        }
 
         current = current->next;
     }
