@@ -168,7 +168,7 @@ void create_winners_payload(char *buffer)
 
     int biggest_nr_points = 0;
 
-    sprintf(buffer, "3"); // insert code
+    strcpy(buffer, "3"); // insert code
     strcat(buffer, " ");
 
     char number[3];
@@ -185,6 +185,7 @@ void create_winners_payload(char *buffer)
         }
         current = current->next;
     }
+    printf("winners buffer: %s\n", buffer);
 }
 
 /***********************************************************************************************************/
