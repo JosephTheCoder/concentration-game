@@ -9,9 +9,9 @@ pthread_mutex_t **lock;
 player_t *players_list_head = NULL;
 
 /***********************************************************************************************
+ * find_fd_list()
  * 
- * 
- * 
+ * Encontrar o nodo da lista do fd correspondente.
  * 
  * *********************************************************************************************/
 player_t *find_fd_list(int fd)
@@ -25,9 +25,9 @@ player_t *find_fd_list(int fd)
 }
 
 /***********************************************************************************************
+ * update_cell_color()
  * 
- * 
- * 
+ * Atualiza a cor atual de uma celula durate o jogo.
  * 
  * *********************************************************************************************/
 void update_cell_color(int x, int y, int r, int g, int b, int state)
@@ -42,9 +42,9 @@ void update_cell_color(int x, int y, int r, int g, int b, int state)
 }
 
 /***********************************************************************************************
+ * random_color():
  * 
- * 
- * 
+ * Escolhe os numeros para criar uma cor diferente para cada jogador.
  * 
  * *********************************************************************************************/
 int *random_color()
@@ -59,16 +59,16 @@ int *random_color()
 }
 
 /***********************************************************************************************
+ * write_payload()
  * 
- * 
- * 
+ * Cria a mensagem e envia aos jogadores.
  * 
  * *********************************************************************************************/
 int write_payload(char *payload, int fd)
 {
     int written = 0;
     int n;
-
+    printf("payload=%s\n", payload);
     while (written < strlen(payload))
     {
         if ((n = write(fd, payload + written, strlen(payload) - written)) < 0)
@@ -82,10 +82,122 @@ int write_payload(char *payload, int fd)
     return written;
 }
 
+
+
 /***********************************************************************************************
+ * send_play_to_all():
  * 
+ * Envia o buffer para todos os jogadores.
  * 
+ * *********************************************************************************************/
+void *send_play_to_all(void *buffer) //arg = string com posição jogada
+{
+    player_t *current = players_list_head;
+    char *payload = (char *)buffer;
+
+    int n=0;
+
+    while (current != NULL)
+    {
+        n = write_payload(payload, current->fd);
+        printf("Sent payload with %d bytes to player %d: %s\n", n, current->number, payload);
+        current = current->next;
+    }
+
+    pthread_exit(NULL);
+}
+
+/***********************************************************************************************
+ * broadcast_up():
  * 
+ * Diz aos jogadores para viraram para cima a carta indicada.
+ * 
+ * *********************************************************************************************/
+void broadcast_up(int origin_player, int x, int y, char *str, int *color)
+{
+    pthread_t thread_ID_sendPlays;
+    char buffer[BUFFER_SIZE] = {'\0'};
+
+    sprintf(buffer, "1 %d %d %d %s %d %d %d", origin_player, x, y, str, color[0], color[1], color[2]);
+    strcat(buffer, "\n");
+    // construção buffer
+    pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
+    pthread_join(thread_ID_sendPlays, NULL);
+}
+
+/***********************************************************************************************
+ * broadcast_down()
+ * 
+ * Diz aos jogadores para viraram para baixo a carta indicada.
+ * 
+ * *********************************************************************************************/
+void broadcast_down(int origin_player, int x, int y, char *str)
+{
+    pthread_t thread_ID_sendPlays;
+    char buffer[BUFFER_SIZE] = {'\0'};
+
+    // memset(buffer, 0, BUFFER_SIZE);
+    sprintf(buffer, "-1 %d %d %d %s", origin_player, x, y, str);
+    strcat(buffer, "\n");
+    // construção buffer
+    pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
+    pthread_join(thread_ID_sendPlays, NULL);
+}
+
+/***********************************************************************************************
+ * broadcast_winners()
+ * 
+ * Envia a mensagem para os vencedores e para os perdedores.
+ * 
+ * *********************************************************************************************/
+void broadcast_winners()
+{
+    char buffer[BUFFER_SIZE] = {'\0'};
+
+    char won[2] = "3";
+    char lost[2] = "5";
+
+    player_t *current = players_list_head;
+
+    int biggest_nr_points = 0;
+
+    while (current != NULL)
+    {
+        printf("player %d points: %d\n", current->number, current->nr_points);
+
+        if (current->nr_points >= biggest_nr_points)
+            biggest_nr_points = current->nr_points;
+
+        current = current->next;
+    }
+
+    current = players_list_head;
+
+    while (current != NULL)
+    {
+        if (current->nr_points == biggest_nr_points)
+        {
+            memset(buffer, 0, BUFFER_SIZE);
+            strcat(buffer, won);
+            write_payload(buffer, current->fd);
+        }
+
+        else
+        {
+            memset(buffer, 0, BUFFER_SIZE);
+            strcat(buffer, lost);
+            write_payload(buffer, current->fd);
+        }
+
+        current = current->next;
+    }
+}
+
+
+/***********************************************************************************************
+ * read_second_play();
+ * 
+ * Lê a segunda jogada do jogador e pede a resposta (se é sucesso ou nao)
  * 
  * *********************************************************************************************/
 void *read_second_play(void *sock_fd)
@@ -138,118 +250,12 @@ void *read_second_play(void *sock_fd)
 }
 
 /***********************************************************************************************
+ * read_first_play():
  * 
- * 
- * 
- * 
- * *********************************************************************************************/
-void *send_play_to_all(void *buffer) //arg = string com posição jogada
-{
-    player_t *current = players_list_head;
-    char *payload = (char *)buffer;
-
-    int n;
-
-    while (current != NULL)
-    {
-        n = write_payload(payload, current->fd);
-        printf("Sent payload with %d bytes to player %d: %s\n", n, current->number, payload);
-        current = current->next;
-    }
-
-    pthread_exit(NULL);
-}
-
-/***********************************************************************************************
- * 
- * 
- * 
- * 
- * *********************************************************************************************/
-void broadcast_up(int origin_player, int x, int y, char *str, int *color)
-{
-    pthread_t thread_ID_sendPlays;
-    char buffer[BUFFER_SIZE] = {'\0'};
-
-    sprintf(buffer, "1 %d %d %d %s %d %d %d", origin_player, x, y, str, color[0], color[1], color[2]);
-    strcat(buffer, "\n");
-    // construção buffer
-    pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
-    pthread_join(thread_ID_sendPlays, NULL);
-}
-
-/***********************************************************************************************
- * 
- * 
- * 
- * 
- * *********************************************************************************************/
-void broadcast_down(int origin_player, int x, int y, char *str)
-{
-    pthread_t thread_ID_sendPlays;
-    char buffer[BUFFER_SIZE] = {'\0'};
-
-    // memset(buffer, 0, BUFFER_SIZE);
-    sprintf(buffer, "-1 %d %d %d %s", origin_player, x, y, str);
-    strcat(buffer, "\n");
-    // construção buffer
-    pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
-    pthread_join(thread_ID_sendPlays, NULL);
-}
-
-/***********************************************************************************************
- * 
- * 
- * 
- * 
- * *********************************************************************************************/
-void broadcast_winners()
-{
-    char buffer[BUFFER_SIZE] = {'\0'};
-
-    char won[2] = "3";
-    char lost[2] = "5";
-
-    player_t *current = players_list_head;
-
-    int biggest_nr_points = 0;
-
-    while (current != NULL)
-    {
-        printf("player %d points: %d\n", current->number, current->nr_points);
-
-        if (current->nr_points >= biggest_nr_points)
-            biggest_nr_points = current->nr_points;
-
-        current = current->next;
-    }
-
-    current = players_list_head;
-
-    while (current != NULL)
-    {
-        if (current->nr_points == biggest_nr_points)
-        {
-            memset(buffer, 0, BUFFER_SIZE);
-            strcat(buffer, won);
-            write_payload(buffer, current->fd);
-        }
-
-        else
-        {
-            memset(buffer, 0, BUFFER_SIZE);
-            strcat(buffer, lost);
-            write_payload(buffer, current->fd);
-        }
-
-        current = current->next;
-    }
-}
-
-/***********************************************************************************************
- * 
- * 
- * 
+ * Le a primeira jogada do jogador e espera pela segunda, vê se é sucesso, se nao for baixa 
+ * as cartas.
+ * Detecta se o jogo acabou.
+ * Envia os dados aos jogadores.
  * 
  * *********************************************************************************************/
 void *read_first_play(void *sock_fd)
@@ -378,6 +384,7 @@ void *read_first_play(void *sock_fd)
                         aux = aux->next;
                     }
                     //pthread_exit(NULL);
+                    
                     break;
 
                 case 4:
@@ -489,7 +496,9 @@ void board_dispatcher(int *flag_inicio, int new_fd)
             current = current->next;
         }
     }
-
+    else if(nr_players == 2 && *flag_inicio == 0){
+         send_state_board(new_fd, dim);
+    }
     else if (nr_players > 2)
     {
         send_state_board(new_fd, dim);
@@ -655,7 +664,7 @@ int main(int argc, char *argv[])
         }
         else //se ja ha um jogador entao adicionar jogador à lista
         {
-            push_to_list(players_list_head, color, new_fd, nr_players);
+            push_to_list(players_list_head, color, new_fd, numero_jogador);
         }
 
         // informa o jogador do seu numero e da sua cor
