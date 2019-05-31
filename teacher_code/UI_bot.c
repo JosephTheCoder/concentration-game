@@ -246,8 +246,6 @@ void *generate_first_play(void *arg)
             random_place->position[0] = rand() % dim;
             random_place->position[1] = rand() % dim;
 
-            // random_place = get_playable_position(position_index);
-
             memset(buffer, 0, BUFFER_SIZE);
             sprintf(buffer, "%d %d", random_place->position[0], random_place->position[1]);
             printf("Sending play: %s\n", buffer);
@@ -262,33 +260,14 @@ void *generate_first_play(void *arg)
 
 
 /***********************************************************************************
+ * main()
  * 
+ * Faz a connecão com o servidor, recebe os parametros iniciais como a dimensao da
+ * board, a cor associada e o numero de jogador.
  * 
+ * Inicia as jogadas do jogador e recebe informação do servidor
  * 
- * 
- * ********************************************************************************/
-
-playable_place *get_playable_position(int index)
-{
-    int i = 0;
-    playable_place *current = playable_positions;
-
-    for (i = 0; i < index; i++)
-    {
-        printf("%d %d\n", current->position[0], current->position[1]);
-        current = current->next;
-    }
-
-    return current;
-}
-
-
-/***********************************************************************************
- * 
- * 
- * 
- * 
- * ********************************************************************************/
+ * *********************************************************************************/
 int main(int argc, char *argv[])
 {
     
