@@ -50,11 +50,9 @@ void read_plays()
     
     while (!done)
     {
-        
         cnt = 0;
         n = 0;
-        if (done == 1)
-            break;
+        
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
         if(n == -1)
@@ -124,8 +122,9 @@ void read_plays()
                 {
                     printf("Player %d - You lost! :(\n", player_number);
                 }
-
+                printf("done before: %d\n", done);
                 done=1;
+                printf("done after: %d\n", done);
             }
 
             // turn card down
