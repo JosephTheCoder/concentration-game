@@ -85,7 +85,7 @@ void read_plays()
             paint_card(play[0], play[1], color[0], color[1], color[2]);
             write_card(play[0], play[1], str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
             
-            remove_playable_position(play);
+            // remove_playable_position(play);
 
             // sleep(1);
             bot_status = SEND_PLAY;
@@ -162,20 +162,21 @@ void *read_sdl_events()
     pthread_exit(NULL);
 }
 
-void *generate_first_play()
+void *generate_first_play(void *arg)
 {
-    int position_index;
+    int dim = *((int *)arg);
     char buffer[BUFFER_SIZE] = {'\0'};
 
-    playable_place *random_place;
+    playable_place *random_place = (playable_place *)malloc(sizeof(playable_place));
 
     while (!terminate)
     {
         if (bot_status == SEND_PLAY)
         {
-            position_index = rand() % nr_playable_positions;
+            random_place->position[0] = rand() % dim;
+            random_place->position[1] = rand() % dim;
 
-            random_place = get_playable_position(position_index);
+            // random_place = get_playable_position(position_index);
 
             memset(buffer, 0, BUFFER_SIZE);
             sprintf(buffer, "%d %d", random_place->position[0], random_place->position[1]);
@@ -310,11 +311,13 @@ int main(int argc, char *argv[])
     read_board();
 
     printf("Received all the board info\n");
+    
+    sleep(2);
 
     pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL); // change this cause function only reads SDL_QUIT
 
     bot_status = SEND_PLAY;
-    pthread_create(&thread_ID_generate_plays, NULL, generate_first_play, NULL);
+    pthread_create(&thread_ID_generate_plays, NULL, generate_first_play, (void *)&dim);
 
     read_plays();
 
