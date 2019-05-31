@@ -24,6 +24,7 @@ int done; // acaba o jogo do jogador quando =1
 
 board_place *board_client;
 
+int get_mouse_press = 1;
 int player_number;
 
 int my_color[3];

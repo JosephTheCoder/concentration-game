@@ -37,8 +37,6 @@ void update_cell_color(int x, int y, int r, int g, int b, int state)
     board[i].color[0] = r;
     board[i].color[1] = g;
     board[i].color[2] = b;
-
-    printf("\nupdated cell (%d,%d) state to :%d\n", x, y, state);
 }
 
 /***********************************************************************************************
@@ -109,8 +107,8 @@ void *read_second_play(void *sock_fd)
     else if (rv == 0)
     {
         resp[fd] = board_play(x, y, fd, 1);
-        printf("timeout\n"); /* a timeout occured */
     }
+
     else
     {
         read(fd, buffer, sizeof(buffer));
@@ -122,18 +120,13 @@ void *read_second_play(void *sock_fd)
         {
 
             sscanf(buffer, "%d %d\n", &x, &y);
-            printf("Buffer 2nd play: %s\n", buffer);
             pthread_mutex_lock(&lock[x][y]);
             resp[fd] = board_play(x, y, fd, 0); //terceiro argumento diz que está tudo OK
-
-            printf("code play 2: %d\n", resp[fd].code);
 
             if (resp[fd].code == 0)
                 pthread_mutex_unlock(&lock[x][y]);
         }
     }
-    printf("saí do select\n");
-
     pthread_exit(NULL);
 }
 
@@ -153,7 +146,6 @@ void *send_play_to_all(void *buffer) //arg = string com posição jogada
     while (current != NULL)
     {
         n = write_payload(payload, current->fd);
-        printf("Sent payload with %d bytes to player %d: %s\n", n, current->number, payload);
         current = current->next;
     }
 
@@ -255,8 +247,8 @@ void broadcast_winners()
 void *read_first_play(void *sock_fd)
 {
     int fd = *((int *)sock_fd);
-    int n=0, x = 0, y = 0;
-    printf("fd: %d\n", fd);
+    int n = 0, x = 0, y = 0;
+
     char buffer[BUFFER_SIZE] = {'\0'};
     int terminate = 0;
     char str[3];
@@ -275,9 +267,7 @@ void *read_first_play(void *sock_fd)
         {
             perror("read:");
         }
-        buffer[strlen(buffer)]='\0';
-        printf("%s\n", buffer);
-        printf("number of players:%d\n", nr_players);
+        buffer[strlen(buffer)] = '\0';
 
         if (strcmp(buffer, "exiting") == 0)
         {
@@ -292,11 +282,10 @@ void *read_first_play(void *sock_fd)
         {
 
             sscanf(buffer, "%d %d\n", &x, &y);
-            printf("Buffer 1st play coMming from Player %d: %s\n", current->number, buffer);
 
             pthread_mutex_lock(&lock[x][y]);
             resp[fd] = board_play(x, y, fd, 0); // o terceiro argumento diz que nao é para fazer cancel da jogada
-            printf("resp[fd] first play: %d\n", resp[fd].code);
+
             switch (resp[fd].code)
             {
             case 0:
@@ -321,8 +310,6 @@ void *read_first_play(void *sock_fd)
                 //pthread join, receives code as return
                 pthread_join(thread_ID_secondPlay, NULL);
 
-                //printf("code play 2: %d\n", code);
-                printf("code play 2_first thread: %d\n", resp[fd].code);
                 switch (resp[fd].code)
                 {
                 case 0:
@@ -367,7 +354,7 @@ void *read_first_play(void *sock_fd)
                     current->nr_points++;
 
                     broadcast_winners();
-                    
+
                     // RESTART:
                     restart_board(board, dim);
 
@@ -377,7 +364,6 @@ void *read_first_play(void *sock_fd)
                         aux->nr_points = 0;
                         aux = aux->next;
                     }
-                    //pthread_exit(NULL);
                     break;
 
                 case 4:
@@ -457,8 +443,6 @@ void send_state_board(int fd, int dim_board)
         sprintf(str, "%d", translate_i_to_y(i, dim_board));
         strcat(buffer, str);
 
-        printf("Sending cell: %s\n", buffer);
-
         write(fd, buffer, sizeof(buffer));
     }
 
@@ -466,7 +450,6 @@ void send_state_board(int fd, int dim_board)
     sprintf(buffer, "%s", "board_sent");
     write_payload(buffer, fd);
 }
-
 
 /***********************************************************************************************
  * 
@@ -512,6 +495,12 @@ void push_to_list(player_t *head, int *color, int fd, int player_number)
 
     /* now we can add a new variable */
     current->next = (player_t *)malloc(sizeof(player_t));
+
+    if (current->next == NULL)
+    {
+        printf("Memory allocation failed!\n");
+        exit(1);
+    }
 
     current->next->fd = fd;
     current->next->number = player_number;
@@ -592,9 +581,22 @@ int main(int argc, char *argv[])
 
     // aloca mutex_lock segundo as dimensoes da board
     lock = (pthread_mutex_t **)malloc(dim * sizeof(pthread_mutex_t *));
+
+    if (lock == NULL)
+    {
+        printf("Memory allocation of the lock failed!\n");
+        exit(1);
+    }
+
     for (i = 0; i < dim; i++)
     {
         lock[i] = (pthread_mutex_t *)malloc(dim * sizeof(pthread_mutex_t));
+
+        if (lock[i] == NULL)
+        {
+            printf("Memory allocation of the lock failed!\n");
+            exit(1);
+        }
     }
 
     // ---- Setup TCP server ----
@@ -643,7 +645,10 @@ int main(int argc, char *argv[])
         {
             players_list_head = (player_t *)malloc(sizeof(player_t));
             if (players_list_head == NULL)
+            {
+                printf("Memory Allocation of the player's list failed!");
                 exit(1);
+            }
 
             players_list_head->number = numero_jogador;
             players_list_head->fd = new_fd;

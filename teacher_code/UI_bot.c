@@ -70,11 +70,9 @@ void read_plays()
             }
         }
         // cnt é o numero de mensagens recebidas
-        printf("cnt: %d\n", cnt);
         if (cnt == 0)
         {
             sscanf(buffer1, "%[^\n]s\n", buffer);
-            printf("buffer: %s\n", buffer);
         }
         else if (cnt > 0)
         {
@@ -95,19 +93,26 @@ void read_plays()
         while(cnt > -1){
 
             sscanf(buffer, "%d", &code);
-            printf("buffer recebido no read plays: %s\n", buffer);
 
-            // receives WINNER signal
-             if (code == 3) // se algum jogador ganha
+            // Winner or Looser
+            if (code == 3) // se algum jogador ganha
             {
                 printf("Player %d - You WON! :)\n", player_number);
-                end = 1;
+                reset_board(300, 300, dim);
+                read_board();
+
+                bot_status = SEND_PLAY;
             }
+
             else if (code == 5)
             {
                 printf("Player %d - You LOST... :(\n", player_number);
-                end = 1;
+                reset_board(300, 300, dim);
+                read_board();
+
+                bot_status = SEND_PLAY;
             }
+
             // receives signal to turn card DOWN
             else if (code == -1)
             {
@@ -121,7 +126,6 @@ void read_plays()
             else
             {
                 sscanf(buffer, "1 %d %d %d %s %d %d %d", &play_origin, &play[0], &play[1], str_play, &color[0], &color[1], &color[2]);
-                printf("Paint cell %d %d with the color %d %d %d\n", play[0], play[1], color[0], color[1], color[2]);
                 paint_card(play[0], play[1], color[0], color[1], color[2]);
                 write_card(play[0], play[1], str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
 
@@ -236,6 +240,12 @@ void *generate_first_play(void *arg)
 
     playable_place *random_place = (playable_place *)malloc(sizeof(playable_place));
 
+    if (random_place == NULL)
+    {
+        printf("Memory Allocation of new position failed!\n");
+        exit(1);
+    }
+
     while (end!=1)
     {   
         if (bot_status == SEND_PLAY)
@@ -247,7 +257,6 @@ void *generate_first_play(void *arg)
 
             memset(buffer, 0, BUFFER_SIZE);
             sprintf(buffer, "%d %d", random_place->position[0], random_place->position[1]);
-            printf("Sending play: %s\n", buffer);
             write_payload(buffer, sock_fd);
             bot_status = WAITING_RESPONSE;
         }
@@ -255,82 +264,6 @@ void *generate_first_play(void *arg)
     }
     pthread_exit(NULL);
 }
-
-
-/***********************************************************************************
- * 
- * 
- * 
- * 
- * ********************************************************************************/
-void save_playable_position(int *new_position)
-{
-    playable_place *playable_pos = (playable_place *)malloc(sizeof(playable_place));
-
-    playable_pos->next = playable_positions;
-    playable_pos->position[0] = new_position[0];
-    playable_pos->position[1] = new_position[1];
-
-    // head = playable_pos;
-    playable_positions = playable_pos;
-    nr_playable_positions++;
-}
-
-
-/***********************************************************************************
- * 
- * 
- * 
- * 
- * ********************************************************************************/
-void remove_playable_position(int *position)
-{
-    playable_place *temp = playable_positions;
-
-    playable_place *prev = NULL;
-
-    while (temp->position[0] != position[0] && temp->position[1] != position[1] && temp->next != NULL)
-    {
-        prev = temp;
-        temp = temp->next;
-    }
-
-    if (temp->position[0] != position[0] && temp->position[1])
-    {
-        if (prev)
-        {
-            prev->next = temp->next;
-        }
-        else
-        {
-            playable_positions = temp->next;
-        }
-        free(temp);
-        nr_playable_positions--;
-    }
-}
-
-/***********************************************************************************
- * 
- * 
- * 
- * 
- * ********************************************************************************/
-
-playable_place *get_playable_position(int index)
-{
-    int i = 0;
-    playable_place *current = playable_positions;
-
-    for (i = 0; i < index; i++)
-    {
-        printf("%d %d\n", current->position[0], current->position[1]);
-        current = current->next;
-    }
-
-    return current;
-}
-
 
 /***********************************************************************************
  * 
@@ -414,10 +347,10 @@ int main(int argc, char *argv[])
 
     bot_status = SEND_PLAY;
     pthread_create(&thread_ID_generate_plays, NULL, generate_first_play, (void *)&dim);
+    
     // detecta as jogadas enviadas pelo servidor
     read_plays();
 
-    printf("fim\n");
     close_board_windows();
 
     return 0;
