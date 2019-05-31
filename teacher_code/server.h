@@ -12,7 +12,7 @@
 #include <netdb.h>
 #include <pthread.h>
 
-#define CONCENTRATION_GAME_PORT 3022
+#define CONCENTRATION_GAME_PORT 3025
 #define BUFFER_SIZE 128
 
 typedef struct player{
@@ -31,12 +31,10 @@ int  translate_i_to_y();
 char build_resp();
 void *read_first_play();
 void *read_second_play();
-
+char *create_winners_payload();
 void server_fcn();
 void * thread_fcn();
-
 int translate_i_to_x(int, int);
-
 int translate_i_to_y(int, int);
 
 player_t * find_fd_list();

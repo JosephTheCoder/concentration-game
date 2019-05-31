@@ -53,7 +53,8 @@ void read_plays()
         
         cnt = 0;
         n = 0;
-        
+        if (done == 1)
+            break;
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
         if(n == -1)
@@ -124,7 +125,7 @@ void read_plays()
                     printf("Player %d - You lost! :(\n", player_number);
                 }
 
-                break;
+                done=1;
             }
 
             // turn card down

@@ -207,13 +207,14 @@ void broadcast_down(int origin_player, int x, int y, char *str)
  * 
  * 
  * *********************************************************************************************/
-void create_winners_payload(char *buffer)
+char *create_winners_payload()
 {
+    char *buffer = (char *) malloc(BUFFER_SIZE*sizeof(char));
     player_t *current = players_list_head;
 
     int biggest_nr_points = 0;
 
-    sprintf(buffer, "3"); // insert code
+    strcpy(buffer, "3"); // insert code
     strcat(buffer, " ");
 
     char number[3];
@@ -223,13 +224,26 @@ void create_winners_payload(char *buffer)
         printf("player %d points: %d\n", current->number, current->nr_points);
         if (current->nr_points >= biggest_nr_points)
         {
-            sprintf(number, "%d", current->number);
-            strcat(buffer, number);
-            strcat(buffer, " ");
             biggest_nr_points = current->nr_points;
         }
         current = current->next;
     }
+
+    current = players_list_head;
+
+    while(current != NULL)
+    {
+        if (current->nr_points == biggest_nr_points)
+        {
+            sprintf(number, "%d", current->number);
+            strcat(buffer, number);
+            strcat(buffer, " ");
+        }
+        current = current->next;
+    }
+    printf("winners buffer: %s\n", buffer);
+    strcat(buffer, "\n");
+    return buffer;
 }
 
 
@@ -242,10 +256,7 @@ void create_winners_payload(char *buffer)
 void broadcast_winners()
 {
     pthread_t thread_ID_sendPlays;
-    char buffer[BUFFER_SIZE] = {'\0'};
-
-    create_winners_payload(buffer);
-    strcat(buffer, "\n");
+    char *buffer = create_winners_payload();
 
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
