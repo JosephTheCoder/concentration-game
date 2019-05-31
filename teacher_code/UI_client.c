@@ -55,6 +55,7 @@ int write_payload(char *payload, int fd)
 void read_plays()
 {   
     int n, i=0, cnt=0;
+    int won = 0;
     int code = 0;
     int winner;
     int play_origin;
@@ -65,68 +66,82 @@ void read_plays()
     char str_play[3];
     int color[3];
 
+  
+
 
     // Receive response from server
     while (!terminate)
     {
-        cnt=0;
+        cnt = 0;
         n = 0;
 
         memset(buffer1, 0, BUFFER_SIZE);
         n = read(sock_fd, buffer1, BUFFER_SIZE);
-        buffer1[strlen(buffer1)]='\0';
+        buffer1[strlen(buffer1)] = '\0';
         printf("strlen(buffer1)=%ld\n", strlen(buffer1));
 
-        for(i=0; i<strlen(buffer1)-1; i++)
+        for (i = 0; i < strlen(buffer1) - 1; i++)
         {
-            if(buffer1[i]=='\n')
+            if (buffer1[i] == '\n')
             {
-                buffer1[i]=',';
-                cnt+=1;
+                buffer1[i] = ',';
+                cnt += 1;
             }
         }
-        
+
         printf("Received play response with %d bytes: %s\n", n, buffer1);
-        printf("cnt: %d\n",cnt);
+        printf("cnt: %d\n", cnt);
 
         if (n == -1)
         {
             perror("error reading play response");
             exit(-1);
         }
-        if(cnt==0){
-            sscanf(buffer1,"%[^\n]s\n", buffer);
-            printf("buffer: %s\n",buffer);
-        }else if(cnt>0){
-            printf("%d\n",sscanf(buffer1,"%[^,]s,", buffer));
+        if (cnt == 0)
+        {
+            sscanf(buffer1, "%[^\n]s\n", buffer);
+            printf("buffer: %s\n", buffer);
+        }
+        else if (cnt > 0)
+        {
+            printf("%d\n", sscanf(buffer1, "%[^,]s,", buffer));
             char *p;
-            for(p=buffer1; i<strlen(buffer1); p++)
+            for (p = buffer1; i < strlen(buffer1); p++)
             {
-                if(*p==',')
+                if (*p == ',')
                 {
-                    p=p+1;
+                    p = p + 1;
                     break;
                 }
             }
             strcpy(resto, p);
-            printf("buffer: %s\n",buffer);
-            printf("resto: %s\n",resto);
+            printf("buffer: %s\n", buffer);
+            printf("resto: %s\n", resto);
         }
 
         // Enquanto ainda ha mensagens para ler no buffer1
         while(cnt>-1){
 
             sscanf(buffer, "%d", &code);
-            printf("buffer recebido no read plays: %s\n",buffer);
+            printf("buffer recebido no read plays: %s\n", buffer);
 
             // Winner or Looser
             if (code == 3) // se algum jogador ganha
             {
-                sscanf(buffer, "3 %d %d %d %s %d %d %d", &winner, &play_x, &play_y, str_play, &color[0], &color[1], &color[2]);
-                paint_card(play_x, play_y, color[0], color[1], color[2]);
-                write_card(play_x, play_y, str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
-                
-                printf("The winner is the Player %d!\n", winner);
+                while (sscanf(buffer, "%d ", &winner) == 1)
+                {
+                    if (winner == player_number)
+                    {
+                        printf("Player %d - You won! :)\n", player_number);
+                        won = 1;
+                    }
+                }
+
+                if (won == 0)
+                {
+                    printf("Player %d - You lost! :(\n", player_number);
+                }
+
                 break;
             }
 
@@ -227,7 +242,8 @@ void *read_sdl_events()
                 memset(buffer, 0, BUFFER_SIZE);
                 strcpy(buffer, "exiting");
                 printf("Im leaving the game!\n");
-                write_payload(buffer, sock_fd);          
+                write_payload(buffer, sock_fd);   
+                close_board_windows();       
                 terminate = 1;
                 pthread_exit(NULL);
             }
@@ -236,14 +252,13 @@ void *read_sdl_events()
             {
                 int board_x, board_y;
                 get_board_card(event.button.x, event.button.y, &board_x, &board_y);
-                if(board_x<dim && board_y<dim)
+                if (board_x < dim && board_y < dim)
                 {
                     // send play to server
                     memset(buffer, 0, BUFFER_SIZE);
                     sprintf(buffer, "%d %d\n", board_x, board_y);
                     printf("Sending play: %s\n", buffer);
                     write_payload(buffer, sock_fd);
-                    
                 }
             }
             }
@@ -330,10 +345,13 @@ int main(int argc, char *argv[])
     /* Start game (copy from memory-single) */
     pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL);
 
+    pthreat_join(thread_ID_read_sdl_events, NULL);
+
     read_plays();
 
     printf("fim\n");
     close_board_windows();
 
     close(sock_fd);
+    return 0;
 }

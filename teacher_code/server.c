@@ -164,13 +164,36 @@ void broadcast_down(int origin_player, int x, int y, char *str)
 
 /***********************************************************************************************************/
 
-void broadcast_winner(int player, int x, int y, char *str, int *color)
+void create_winners_payload(char *buffer)
+{
+    player_t *current = players_list_head;
+
+    int biggest_nr_points = 0;
+
+    sprintf(buffer, "3 "); // insert code
+    
+    while(current != NULL)
+    {
+        if (current->nr_points >= biggest_nr_points)
+        {
+            sprintf(buffer, "%d", current->number);
+            biggest_nr_points = current->nr_points;
+        }
+
+        current = current->next;
+    }
+}
+
+/***********************************************************************************************************/
+
+void broadcast_winners()
 {
     pthread_t thread_ID_sendPlays;
     char buffer[BUFFER_SIZE] = {'\0'};
 
-    sprintf(buffer, "3 %d %d %d %s %d %d %d", player, x, y, str, color[0], color[1], color[2]);
-     strcat(buffer,"\n");
+    create_winners_payload(buffer);
+    strcat(buffer,"\n");
+
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
 }
@@ -224,13 +247,14 @@ void *read_first_play(void *sock_fd)
                 /* chose filled position - Does nothing */
                 pthread_mutex_unlock(&lock[x][y]);
                 break;
+
             case 1:
                 /* first play */
                 resp[fd].code=0;
                 update_cell_color(resp[fd].play1[0], resp[fd].play1[1], current->color[0], current->color[1], current->color[2], 1);
                 broadcast_up(current->number, resp[fd].play1[0], resp[fd].play1[1], resp[fd].str_play1, current->color);
                 pthread_mutex_unlock(&lock[resp[fd].play1[0]][resp[fd].play1[1]]);
-                
+   
                 str[0] = resp[fd].str_play1[0];
                 str[1] = resp[fd].str_play1[1];
                 str[2] = resp[fd].str_play1[2];
@@ -258,10 +282,11 @@ void *read_first_play(void *sock_fd)
                     update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2], 1);
                     broadcast_up(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
                     
-                    current->nr_correct_cards += 2;
+                     current->nr_points++;
                     
                     pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
-                    break;
+                     break;
+                              
 
                 case -2:
 
@@ -279,19 +304,14 @@ void *read_first_play(void *sock_fd)
                     update_cell_color(resp[fd].play2[0], resp[fd].play2[1], 255, 255, 255, 0);
                     break;
 
+
                 case 3:
                     //envia a todos a info para virar a carta e que o jogador x ganhou
                     update_cell_color(resp[fd].play2[0], resp[fd].play2[1], current->color[0], current->color[1], current->color[2], 1);
-                    
-                    current->nr_correct_cards += 2;
-
-                    // create string with winner's ids
-
-                    // broadcast string
-
-                    broadcast_winner(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
+                    broadcast_up(current->number, resp[fd].play2[0], resp[fd].play2[1], resp[fd].str_play2, current->color);
                     pthread_mutex_unlock(&lock[resp[fd].play2[0]][resp[fd].play2[1]]);
-                    
+                    current->nr_points++;
+                    broadcast_winners();
                     break;
 
                 case 4:
@@ -302,8 +322,7 @@ void *read_first_play(void *sock_fd)
                     
                     pthread_exit(NULL);
                     break;
-                }
-                break;
+                 }
             }
         }
     }
@@ -379,7 +398,7 @@ void push_to_list(player_t *head, int *color, int fd, int player_number)
     current->next->color[0] = color[0];
     current->next->color[1] = color[1];
     current->next->color[2] = color[2];
-    current->next->nr_correct_cards = 0;
+    current->next->nr_points = 0;
 
     current->next->next = NULL;
 }
@@ -450,7 +469,6 @@ int main(int argc, char *argv[])
         lock[i] = (pthread_mutex_t *)malloc(dim * sizeof(pthread_mutex_t));
     }
 
-
     // ---- Setup TCP server ----
     int sock_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (sock_fd == -1)
@@ -504,7 +522,7 @@ int main(int argc, char *argv[])
             players_list_head->color[0] = color[0];
             players_list_head->color[1] = color[1];
             players_list_head->color[2] = color[2];
-            players_list_head->nr_correct_cards = 0;
+            players_list_head->nr_points = 0;
             players_list_head->next = NULL;
             
         }

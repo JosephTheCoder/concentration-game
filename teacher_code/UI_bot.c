@@ -31,6 +31,7 @@ void read_plays()
     int play_origin;
 
     int winner;
+    int won = 0;
 
     int n;
 
@@ -51,17 +52,28 @@ void read_plays()
 
         sscanf(buffer, "%d", &code);
         printf("buffer recebido no read plays: %s\n", buffer);
-        
+
         // receives WINNER signal
         if (code == 3)
         {
-            sscanf(buffer, "3 %d %d %d %s %d %d %d", &winner, &play[0], &play[1], str_play, &color[0], &color[1], &color[2]);
-            paint_card(play[0], play[1], color[0], color[1], color[2]);
-            write_card(play[0], play[1], str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
+            if (code == 3)
+            {
+                while (sscanf(buffer, "%d ", &winner) == 1)
+                {
+                    if (winner == player_number)
+                    {
+                        printf("Player %d - You won! :)\n", player_number);
+                        won = 1;
+                    }
+                }
 
-            printf("The winner is the Player %d!\n", winner);
-            bot_status = IDLE;
-            break;
+                if (won == 0)
+                {
+                    printf("Player %d - You lost! :(\n", player_number);
+                }
+
+                break;
+            }
         }
 
         // receives signal to turn card DOWN
@@ -84,7 +96,7 @@ void read_plays()
 
             paint_card(play[0], play[1], color[0], color[1], color[2]);
             write_card(play[0], play[1], str_play, text_color[0], text_color[1], text_color[2]); //receive text color from server
-            
+
             // remove_playable_position(play);
 
             // sleep(1);
@@ -311,7 +323,7 @@ int main(int argc, char *argv[])
     read_board();
 
     printf("Received all the board info\n");
-    
+
     sleep(2);
 
     pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL); // change this cause function only reads SDL_QUIT
