@@ -93,11 +93,10 @@ void *send_play_to_all(void *buffer) //arg = string com posição jogada
     player_t *current = players_list_head;
     char *payload = (char *)buffer;
 
-    int n=0;
 
     while (current != NULL)
     {
-        n = write_payload(payload, current->fd);
+        write_payload(payload, current->fd);
         current = current->next;
     }
 
