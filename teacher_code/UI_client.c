@@ -245,7 +245,8 @@ void *read_sdl_events()
                 write_payload(buffer, sock_fd);   
                 close_board_windows();       
                 terminate = 1;
-                pthread_exit(NULL);
+                exit(0);
+                //pthread_exit(NULL);
             }
 
             case SDL_MOUSEBUTTONDOWN:
@@ -345,7 +346,7 @@ int main(int argc, char *argv[])
     /* Start game (copy from memory-single) */
     pthread_create(&thread_ID_read_sdl_events, NULL, read_sdl_events, NULL);
 
-    pthreat_join(thread_ID_read_sdl_events, NULL);
+    //pthread_join(thread_ID_read_sdl_events, NULL);
 
     read_plays();
 
