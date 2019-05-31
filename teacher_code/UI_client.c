@@ -121,7 +121,7 @@ void read_plays()
         {
             sscanf(buffer, "%d", &code);
             printf("buffer recebido no read plays: %s\n", buffer);
-
+            printf("code: %d\n");
             // Winner or Looser
             if (code == 3) // se algum jogador ganha
             {
