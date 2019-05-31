@@ -175,7 +175,7 @@ void create_winners_payload(char *buffer)
     {
         if (current->nr_points >= biggest_nr_points)
         {
-            sprintf(buffer, "%d", current->number);
+            sprintf(buffer, "%d ", current->number);
             biggest_nr_points = current->nr_points;
         }
 

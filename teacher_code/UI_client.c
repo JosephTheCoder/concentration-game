@@ -119,7 +119,6 @@ void read_plays()
         // Enquanto ainda ha mensagens para ler no buffer1
         while (cnt > -1)
         {
-
             sscanf(buffer, "%d", &code);
             printf("buffer recebido no read plays: %s\n", buffer);
 
