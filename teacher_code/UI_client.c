@@ -123,18 +123,33 @@ void read_plays()
             printf("buffer recebido no read plays: %s\n", buffer);
             printf("code: %d\n", code);
 
+            char *pch;
+
             // Winner or Looser
             if (code == 3) // se algum jogador ganha
             {
-                while (sscanf(buffer, "%d ", &winner) == 1)
+                pch = strtok(buffer, " ");
+                while (pch != NULL)
                 {
-                    printf("winner: %d\n", winner);
+                    pch = strtok(NULL, " ");
+                    sscanf(pch, "%d", &winner);
+
                     if (winner == player_number)
                     {
                         printf("Player %d - You won! :)\n", player_number);
                         won = 1;
                     }
                 }
+
+                // while (sscanf(buffer, "%d ", &winner) == 1)
+                // {
+                //     printf("winner: %d\n", winner);
+                //     if (winner == player_number)
+                //     {
+                //         printf("Player %d - You won! :)\n", player_number);
+                //         won = 1;
+                //     }
+                // }
 
                 if (won == 0)
                 {

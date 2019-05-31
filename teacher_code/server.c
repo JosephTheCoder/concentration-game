@@ -197,7 +197,7 @@ void broadcast_winners()
 
     create_winners_payload(buffer);
     strcat(buffer, "\n");
-    
+
     // construção buffer
     pthread_create(&thread_ID_sendPlays, NULL, send_play_to_all, (void *)buffer);
 }
@@ -229,7 +229,7 @@ void *read_first_play(void *sock_fd)
 
         if (strcmp(buffer, "exiting") == 0)
         {
-            nr_players --;
+            nr_players--;
             //remove player from the list
             printf("Player %d exited!\n", current->number);
             remove_from_list(players_list_head, current->number);
